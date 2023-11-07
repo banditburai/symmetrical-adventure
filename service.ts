@@ -4,7 +4,7 @@ type Tuner = {
   id: string;
   prompt: string;
   url: string;
-  size: number;
+  size: string;
   comments: string;
 }
 
@@ -12,7 +12,7 @@ export const EmptyTuner: Tuner = {
   id: "",
   prompt: "",
   url: "",
-  size: 0,
+  size: "16",
   comments: "",
 }
 

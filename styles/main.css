@@ -11,12 +11,16 @@
 
 body {
   margin: 0;
-  background: #EEE;
+  /* background: #EEE; */
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-family);
   font-size: var(--font-size);
+  background-image: url('img/atlantis.png');
+  background-size: cover; /* Cover the entire viewport */
+  background-position: center; /* Center the image */
+  background-repeat: no-repeat; /* Do not repeat the image */
 }
 
 .app {
@@ -107,38 +111,67 @@ form footer .btn {
   margin: 0 var(--margin-xs);
 }
 
-.posts header {
+.tuners header {
   margin: var(--margin) 0 0;
   display: flex;
   align-items: center;
 }
 
-.posts header h2 {
+.tuners header h2 {
   margin: 0;
-  font-size: 32px;
+  font-size: 24px;
 }
 
-.posts header nav {
+.tuners header nav {
   margin-left: auto;
 }
 
-.posts header button {
+.tuners header button {
   border: 0;
   background: transparent;
   cursor: pointer;
   opacity: .8;
 }
 
-.posts header button:hover {
+.tuners header button:hover {
   opacity: 1;
 }
 
-.posts header button svg {
+.tuners header button svg {
   width: 22px;
   height: 22px;
   fill: #777;
 }
 
-.posts p {
+.tuners p {
   margin: 5px 0 0;
 }
+
+.size-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--margin-xs);
+  margin-bottom: var(--margin-xs);
+}
+
+.size-options label {
+  background: #FFF;
+  padding: 10px var(--margin-sm);
+  border: 2px solid #CCC;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s; /* Smooth transition for background and border */
+}
+
+/* Hide the radio button itself visually, but keep it accessible */
+.size-options input[type="radio"] {
+  display: none; /* Hide radio button */
+}
+
+/* When a radio button is checked, change the style of the associated label */
+.size-options input[type="radio"]:checked + label {
+  background: #87d5da; /* Checked state background */
+  border-color: #AAA; /* Checked state border */
+}
+

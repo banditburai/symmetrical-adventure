@@ -1,7 +1,6 @@
 import { Router, Context, send } from "./deps.ts";
 import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners } from "./service.ts";
 
-
 async function getTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
     tuners: await getTuners()
@@ -16,9 +15,9 @@ async function searchTunersHandler(ctx: Context) {
 }
 
 async function createTunerHandler(ctx: Context) {
-  const body = await ctx.request.body().value;
-  const { id, prompt, url, size, comments } = body;
-
+  const bodyResult = ctx.request.body({ type: "form-data" });
+  const body = await bodyResult.value.read();
+  const { id, prompt, url, size, comments } = body.fields;  
   if (id) {
     await updateTuner({id, prompt, url, size, comments});
   } else {
@@ -28,10 +27,11 @@ async function createTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
     tuners: await getTuners()
   });
+  ctx.response.redirect('/tuners');
 }
 
 async function deleteTunerHandler(ctx: Context) {
-  const { id } = ctx.params;
+  const {id} = ctx.params;
   await deleteTuner(id);
   ctx.render("tuners.html", {
     tuners: await getTuners()
