@@ -1,6 +1,7 @@
 import { Router, Context, send } from "./deps.ts";
 import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners } from "./service.ts";
 
+
 async function getTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
     tuners: await getTuners()
@@ -16,9 +17,7 @@ async function searchTunersHandler(ctx: Context) {
 
 async function createTunerHandler(ctx: Context) {
   const body = await ctx.request.body().value;
-  const id = body.get("id");
-  const title = body.get("title");
-  const content = body.get("content");
+  const { id, prompt, url, size, comments } = body;
 
   if (id) {
     await updateTuner({id, prompt, url, size, comments});
@@ -32,7 +31,7 @@ async function createTunerHandler(ctx: Context) {
 }
 
 async function deleteTunerHandler(ctx: Context) {
-  const {id} = ctx.params;
+  const { id } = ctx.params;
   await deleteTuner(id);
   ctx.render("tuners.html", {
     tuners: await getTuners()
@@ -65,7 +64,7 @@ export default new Router()
   .get("/tuners", getTunerHandler)
   .get("/tuners/form/:id?", tunerFormHandler)
 
-  .tuner("/tuners", createTunerHandler)
+  .post("/tuners", createTunerHandler)
   .delete("/tuners/:id", deleteTunerHandler)
 
   .get("/main.css", cssHandler)
