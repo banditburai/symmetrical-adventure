@@ -58,12 +58,25 @@ async function imgHandler(ctx: Context) {
     index: "index.html", 
   });
 }
+
+async function removeTruncateClassHandler(ctx: Context) {
+  const {id} = ctx.params;
+  const tuner = await getTuner(id);
+  if (!tuner) {
+    ctx.response.status = 404;
+    return;
+  }
+  const tunerHtml = `<span class="prompt-summary">${tuner.prompt}</span>`;
+
+  ctx.response.body = tunerHtml;
+}
+
 export default new Router()
   .get("/", ctx => ctx.render("index.html"))
   .get("/search", searchTunersHandler)
   .get("/tuners", getTunerHandler)
   .get("/tuners/form/:id?", tunerFormHandler)
-
+  .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", createTunerHandler)
   .delete("/tuners/:id", deleteTunerHandler)
   .get("/atlantis.png", imgHandler)

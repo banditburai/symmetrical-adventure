@@ -5,7 +5,7 @@
   hx-encoding="multipart/form-data">
 
   <input type="hidden" name="id" value="<%= it.id %>" />
-  <input type="text" name="prompt" value="<%= it.prompt %>" placeholder="Prompt"/>
+  <textarea name="prompt" placeholder="Prompt"><%= it.prompt %></textarea>
   <input type="url" name="url" value="<%= it.url %>" placeholder="URL"/>
   
   <div class="size-options">

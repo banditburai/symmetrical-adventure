@@ -17,10 +17,10 @@ body {
   justify-content: center;
   font-family: var(--font-family);
   font-size: var(--font-size);
-  
+
 }
 
-.demo-bg{
+.demo-bg {
   opacity: 0.1;
 }
 
@@ -115,16 +115,20 @@ form footer .btn {
 .tuners header {
   margin: var(--margin) 0 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .tuners header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .tuners header nav {
+  margin-top: 5px;
   margin-left: auto;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
 }
 
 .tuners header button {
@@ -162,20 +166,58 @@ form footer .btn {
   border: 2px solid #CCC;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background-color 0.3s, border-color 0.3s; /* Smooth transition for background and border */
+  transition: background-color 0.3s, border-color 0.3s;
+  /* Smooth transition for background and border */
 }
 
-/* Hide the radio button itself visually, but keep it accessible */
+
 .size-options input[type="radio"] {
-  display: none; /* Hide radio button */
+  display: none;
 }
 
-/* When a radio button is checked, change the style of the associated label */
-.size-options input[type="radio"]:checked + label {
-  background: #87d5da; /* Checked state background */
-  border-color: #AAA; /* Checked state border */
+
+.size-options input[type="radio"]:checked+label {
+  background: #87d5da;
+  border-color: #AAA;
 }
 
 input[type="search"]:focus {
-  background-color: #fafafa; 
+  background-color: #fafafa;
+}
+
+.container {
+  width: 50vw;
+  min-width: 200px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+  background-color: black;
+  color: white;  
+}
+
+.container>h3 {
+  color: #2a70a5;
+}
+
+/* CSS for truncated prompts */
+.text-overflow-clamp {
+  padding-left: 2.5%;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* number of lines to show */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width:95%; /
+}
+
+/* Overridden styles for expanded prompt */
+.expanded-prompt {
+  display: block;
+  padding-left: 2.5%;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  word-wrap: break-word;
+  white-space: normal;
+  width: 95%;
 }
