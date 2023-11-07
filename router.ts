@@ -52,12 +52,12 @@ async function cssHandler(ctx: Context) {
 }
 
 async function imgHandler(ctx: Context) {
-  await send(ctx, "/hero.png", {
+  const imagePath = ctx.request.url.pathname; 
+  await send(ctx, imagePath, {
     root: `${Deno.cwd()}/img`,
-    index: "hero.png",
+    index: "index.html", 
   });
 }
-
 export default new Router()
   .get("/", ctx => ctx.render("index.html"))
   .get("/search", searchTunersHandler)
@@ -66,6 +66,6 @@ export default new Router()
 
   .post("/tuners", createTunerHandler)
   .delete("/tuners/:id", deleteTunerHandler)
-
+  .get("/atlantis.png", imgHandler)
   .get("/main.css", cssHandler)
-  .get("/hero.png", imgHandler);
+  .get("/fish.png", imgHandler);

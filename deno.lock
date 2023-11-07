@@ -1,6 +1,8 @@
 {
   "version": "3",
   "redirects": {
+    "https://deno.land/std/fs/mod.ts": "https://deno.land/std@0.205.0/fs/mod.ts",
+    "https://deno.land/x/csv/mod.ts": "https://deno.land/x/csv@v0.9.2/mod.ts",
     "https://deno.land/x/denjucks/mod.d.ts": "https://deno.land/x/denjucks@1.1.1/mod.d.ts",
     "https://deno.land/x/view_engine/mod.ts": "https://deno.land/x/view_engine@v10.6.0/mod.ts"
   },
