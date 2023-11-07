@@ -11,10 +11,10 @@
 <body>
 <div class="app">
   <aside>
-    <h1>Micro.</h1>
+    <h1>🐟 Style Tuners 🍣</h1>
     <img src="/hero.png" />
 
-    <button class="btn primary" hx-get="/posts/form/" hx-target="#main-view">Write</button>
+    <button class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Write</button>
   </aside>
 
   <main>
@@ -25,10 +25,10 @@
       hx-target="#main-view" />
 
     <div
-      hx-get="/posts"
+      hx-get="/tuners"
       hx-trigger="load"
       hx-target="#main-view"
-      kx-on:htmx:timeout="alert('Failed to fetch posts')">
+      kx-on:htmx:timeout="alert('Failed to fetch tuners')">
       <div id="main-view"></div>
     </div>
   </main>

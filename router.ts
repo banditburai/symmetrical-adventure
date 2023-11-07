@@ -1,48 +1,48 @@
 import { Router, Context, send } from "./deps.ts";
-import { getPost, EmptyPost, getPosts, createPost, updatePost, deletePost, searchPosts } from "./service.ts";
+import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners } from "./service.ts";
 
-async function getPostHandler(ctx: Context) {
-  ctx.render("posts.html", {
-    posts: await getPosts()
+async function getTunerHandler(ctx: Context) {
+  ctx.render("tuners.html", {
+    tuners: await getTuners()
   });
 }
 
-async function searchPostsHandler(ctx: Context) {
+async function searchTunersHandler(ctx: Context) {
   const key = ctx.request.url.searchParams.get("key");
-  ctx.render("posts.html", {
-    posts: await searchPosts(key ?? "")
+  ctx.render("tuners.html", {
+    tuners: await searchTuners(key ?? "")
   })
 }
 
-async function createPostHandler(ctx: Context) {
+async function createTunerHandler(ctx: Context) {
   const body = await ctx.request.body().value;
   const id = body.get("id");
   const title = body.get("title");
   const content = body.get("content");
 
   if (id) {
-    await updatePost({id, title, content});
+    await updateTuner({id, prompt, url, size, comments});
   } else {
-    await createPost({title, content});
+    await createTuner({prompt, url, size, comments});
   }
 
-  ctx.render("posts.html", {
-    posts: await getPosts()
+  ctx.render("tuners.html", {
+    tuners: await getTuners()
   });
 }
 
-async function deletePostHandler(ctx: Context) {
+async function deleteTunerHandler(ctx: Context) {
   const {id} = ctx.params;
-  await deletePost(id);
-  ctx.render("posts.html", {
-    posts: await getPosts()
+  await deleteTuner(id);
+  ctx.render("tuners.html", {
+    tuners: await getTuners()
   });
 }
 
-async function postFormHandler(ctx: Context) {
+async function tunerFormHandler(ctx: Context) {
   const {id} = ctx.params;
-  const post = id ? await getPost(id) : EmptyPost;
-  ctx.render("post-form.html", post);
+  const tuner = id ? await getTuner(id) : EmptyTuner;
+  ctx.render("tuner-form.html", tuner);
 }
 
 async function cssHandler(ctx: Context) {
@@ -61,12 +61,12 @@ async function imgHandler(ctx: Context) {
 
 export default new Router()
   .get("/", ctx => ctx.render("index.html"))
-  .get("/search", searchPostsHandler)
-  .get("/posts", getPostHandler)
-  .get("/posts/form/:id?", postFormHandler)
+  .get("/search", searchTunersHandler)
+  .get("/tuners", getTunerHandler)
+  .get("/tuners/form/:id?", tunerFormHandler)
 
-  .post("/posts", createPostHandler)
-  .delete("/posts/:id", deletePostHandler)
+  .tuner("/tuners", createTunerHandler)
+  .delete("/tuners/:id", deleteTunerHandler)
 
   .get("/main.css", cssHandler)
   .get("/hero.png", imgHandler);

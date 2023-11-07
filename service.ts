@@ -1,50 +1,56 @@
 const kv = await Deno.openKv();
 
-type Post = {
+type Tuner = {
   id: string;
-  title: string;
-  content: string;
+  prompt: string;
+  url: string;
+  size: number;
+  comments: string;
 }
 
-export const EmptyPost = {
+export const EmptyTuner = {
   id: "",
-  title: "",
-  content: "",
+  prompt: "",
+  url: "",
+  size: 0,
+  comments: "",
 }
 
-export async function searchPosts(key: string) {
-  const posts = await getPosts()
-  return posts
-  .filter(it => it.title.indexOf(key) > -1)
+export async function searchTuners(key: string) {
+  const tuners = await getTuners()
+  return tuners
+  .filter(it => it.prompt.indexOf(key) > -1)
 }
 
-export async function getPost(id: string) {
-  return (await kv.get(["posts", id])).value;
+export async function getTuner(id: string) {
+  return (await kv.get(["tuners", id])).value;
 }
 
-export async function getPosts() {
-  const posts = [] as Post[];
+export async function getTuners() {
+  const tuners = [] as Tuner[];
 
-  const entries = kv.list({ prefix: ["posts"] });
+  const entries = kv.list({ prefix: ["tuners"] });
   for await (const entry of entries) {
-    posts.push(entry.value);
+    tuners.push(entry.value);
   }
 
-  return posts;
+  return tuners;
 }
 
-export async function createPost(post: Partial<Post>) {
+export async function createTuner(tuner: Partial<Tuner>) {
   const id = crypto.randomUUID();
-  kv.set(["posts", id], {...post, id});
+  await kv.set(["tuners", id], {...tuner, id});
 }
 
-export async function updatePost(data: Partial<Post>) {
-  const post = await getPost(data.id!);
-  post.title = data.title ?? "";
-  post.content = data.content ?? "";
-  kv.set(["posts", data.id!], {...post});
+export async function updateTuner(data: Partial<Tuner>) {
+  const tuner = await getTuner(data.id!);
+  tuner.prompt = data.prompt ?? "";
+  tuner.url = data.url ?? "";
+  tuner.size = data.size ?? "";
+  tuner.comments = data.comments ?? "";
+  kv.set(["tuners", data.id!], {...tuner});
 }
 
-export async function deletePost(id: string) {
-  kv.delete(["posts", id]);
+export async function deleteTuner(id: string) {
+  await kv.delete(["tuners", id]);
 }
