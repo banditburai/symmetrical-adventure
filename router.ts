@@ -1,5 +1,5 @@
 import { Router, Context, send } from "./deps.ts";
-import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners } from "./service.ts";
+import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners, FilterOptions } from "./service.ts";
 
 async function getTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
@@ -7,11 +7,43 @@ async function getTunerHandler(ctx: Context) {
   });
 }
 
+// async function searchTunersHandler(ctx: Context) {
+//   const key = ctx.request.url.searchParams.get("key");
+//   ctx.render("tuners.html", {
+//     tuners: await searchTuners(key ?? "")
+//   })
+// }
+
 async function searchTunersHandler(ctx: Context) {
   const key = ctx.request.url.searchParams.get("key");
+  const size = ctx.request.url.searchParams.get("size") ?? undefined;
+  const raw = ctx.request.url.searchParams.get("raw") === 'true';
+  const imgprompt = ctx.request.url.searchParams.get("imgprompt") === 'true';
+
+  const options: FilterOptions = {
+    key: key ?? "",
+    size: size,
+    raw: raw,
+    imgprompt: imgprompt
+  };
+
+  const { tuners, count } = await searchTuners(options);
+
+  const pills = [
+    { param: 'size', value: '16', selected: size === '16' },
+    { param: 'size', value: '32', selected: size === '32' },
+    { param: 'size', value: '64', selected: size === '64' },
+    { param: 'size', value: '128', selected: size === '128' },
+    { param: 'size', value: 'nonstandard', selected: size === 'nonstandard' },
+    { param: 'raw', value: 'true', selected: raw },
+    { param: 'imgprompt', value: 'true', selected: imgprompt },
+  ];
+
   ctx.render("tuners.html", {
-    tuners: await searchTuners(key ?? "")
-  })
+    tuners: tuners,
+    count: count,
+    pills: pills
+  });
 }
 
 async function createTunerHandler(ctx: Context) {

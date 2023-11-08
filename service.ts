@@ -8,6 +8,12 @@ type Tuner = {
   comments: string;
 }
 
+type Pill = {
+  param: string;
+  value: string;
+  selected: boolean;  
+};
+
 export const EmptyTuner: Tuner = {
   id: "",
   prompt: "",
@@ -16,12 +22,49 @@ export const EmptyTuner: Tuner = {
   comments: "",
 }
 
-export async function searchTuners(key: string) {
-  const tuners = await getTuners()
-  return tuners
-  .filter(it => it.prompt.indexOf(key) > -1)
-}
+export type FilterOptions = {
+  key?: string;
+  size?: string;
+  raw?: boolean;
+  imgprompt?: boolean;
+ 
+};
 
+export let pills: Pill[] = [
+  { param: 'all', value: 'all', selected: true },
+  { param: 'size', value: '16', selected: false },
+  { param: 'size', value: '32', selected: false },
+  { param: 'size', value: '64', selected: false },
+  { param: 'size', value: '128', selected: false },
+  { param: 'size', value: 'nonstandard', selected: false },
+  { param: 'raw', value: 'true', selected: false },
+  { param: 'imgprompt', value: 'true', selected: false },
+];
+
+
+export async function searchTuners(options: FilterOptions): Promise<{tuners: Tuner[], count: number}> {
+  const tuners = await getTuners();
+  const filteredTuners = tuners.filter(tuner => {
+    let matches = true;
+    if (options.key) matches = matches && tuner.prompt.indexOf(options.key) > -1;
+    if (options.size) matches = matches && tuner.size === options.size;
+    if (options.raw) matches = matches && /--style raw/.test(tuner.prompt);
+    if (options.imgprompt) matches = matches && /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(tuner.prompt);    
+    return matches;
+  });
+
+  return { tuners: filteredTuners, count: filteredTuners.length };
+}
+// export async function searchTuners(key: string) {
+//   const tuners = await getTuners();
+//   return tuners
+//     .filter(it => it.prompt.indexOf(key) > -1)    
+// }
+
+export async function getNumberOfEntries(): Promise<number> {
+  const tuners = await getTuners();
+  return tuners.length;
+}
 export async function getTuner(id: string): Promise<Tuner | undefined> {
   const entry = await kv.get(["tuners", id]);
   return entry ? entry.value as Tuner : undefined; // Safe type assertion with a fallback to undefined.

@@ -1,7 +1,9 @@
-<ul class="tuners">
+
+<ul class="tuners">  
+  <span class = "num-results"></span><strong>Number of results:</strong> <%= it.tuners.length %></span>
   <% it.tuners.forEach(tuner=> { %>
     <li>
-      <header>
+      <header>        
         <div class="container">
           <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">
             <%= tuner.prompt %>
@@ -65,8 +67,8 @@
 
     </li>
     <% }) %>
-</ul>
 
+</ul>
 
 <script>
   function togglePrompt(element) {
