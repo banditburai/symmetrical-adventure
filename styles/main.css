@@ -38,10 +38,7 @@ h1 {
   font-size: 42px;
 }
 
-input[type="search"] {
-  flex-grow: 1;
-  margin: 10px;
-}
+
 .content {
   display: flex;
   overflow: auto;
@@ -79,7 +76,7 @@ aside .btn {
   height: 42px;
   line-height: 42px;
   border: 0;
-  background: #D8D8D8;
+  background: #D8D8D8;  
   color: #FFF;
   border-radius: var(--radius);
   padding: 0 var(--margin-sm);
@@ -89,7 +86,9 @@ aside .btn {
   opacity: .9;
   cursor: pointer;
 }
-
+.btn.secondary{
+  color: #000;
+}
 .btn.primary {
   background: #111;
 }
@@ -101,7 +100,7 @@ aside .btn {
 input,
 textarea {
   border: 2px solid #CCC;
-  background: none;
+  background: #fafafa;
   width: 100%;
   border-radius: var(--radius);
   font-size: var(--font-size);
@@ -110,6 +109,11 @@ textarea {
   margin-bottom: var(--margin-xs);
 }
 
+input[type="search"] {
+  flex-grow: 1;
+  background: none;
+  margin: 10px;
+}
 ul {
   list-style-type: none;
   margin: 0;
@@ -124,14 +128,16 @@ form {
   margin-top: var(--margin-sm);
 }
 
-form footer {
+.form-footer {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-form footer .btn {
+.form-footer .btn {
   margin: 0 var(--margin-xs);
+  display: flex;
+  gap: 10px;
 }
 
 .tuners header {
@@ -268,4 +274,28 @@ input[type="search"]:focus {
     padding-right: 10%;    
   }
   
+}
+
+.social-footer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0; /* adjust this value as needed */
+}
+
+.social-media-links {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 15px;
+  margin-bottom: 20px;
+}
+
+.social-media-links img {
+  width: 24px; /* adjust this value as needed */
+  height: 24px; /* adjust this value as needed */
 }

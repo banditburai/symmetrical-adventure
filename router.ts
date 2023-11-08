@@ -80,5 +80,7 @@ export default new Router()
   .post("/tuners", createTunerHandler)
   .delete("/tuners/:id", deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
+  .get("/logo.png", imgHandler)
   .get("/main.css", cssHandler)
   .get("/fish.png", imgHandler);
+  
