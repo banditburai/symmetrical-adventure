@@ -11,41 +11,63 @@
 
 body {
   margin: 0;
-  background: linear-gradient(to bottom, #a2d8f0 0%, #fafafa 100%);
+  background: linear-gradient(to bottom, #a2d8f0 50%, #fafafa 100%);
+  background-attachment: fixed;
   display: flex;
-  align-items: center;
   justify-content: center;
   font-family: var(--font-family);
   font-size: var(--font-size);
-
 }
 
-.demo-bg {
-  opacity: 0.1;
-}
-
-.app {
-  width: 800px;
+.app {  
   display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+h1 {
+  align-self: flex-start;
+  margin-right: 5px;
+  line-height: 80%;
+  font-size: 42px;
+}
+
+input[type="search"] {
+  flex-grow: 1;
+  margin: 10px;
+}
+.content {
+  display: flex;
+  overflow: auto;
 }
 
 aside {
-  flex: 1;
-  text-align: center;
+  position: sticky;
+  top: 0;
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
 }
 
 aside img {
   border-radius: var(--radius-lg);
-  max-width: 100%;
-}
-
-aside h1 {
-  text-align: center;
-  font-size: 42px;
+  min-width: 100px;
+  max-width: 200px;
 }
 
 main {
+  margin-right: 10px;
   flex: 2;
+  display: flex;
+  align-items: flex-start;
   margin-left: var(--margin-lg);
 }
 
@@ -220,4 +242,30 @@ input[type="search"]:focus {
   word-wrap: break-word;
   white-space: normal;
   width: 95%;
+}
+
+@media (max-width: 800px) {
+  .header, .content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1, input[type="search"] {
+    width: 90%; /* adjust this value as needed */
+    margin-bottom: 10px; /* adjust this value as needed */
+  }
+
+  aside {
+    position: static;
+    width: 100%; /* adjust this value as needed */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: right;
+    padding: 0 50px;
+  }
+  aside img {
+    padding-right: 10%;    
+  }
+  
 }

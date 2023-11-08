@@ -1,37 +1,37 @@
 <html>
+
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;1,100&display=swap"
-        rel="stylesheet">
+    rel="stylesheet">
 
   <script src="https://unpkg.com/htmx.org@1.9.6"></script>
-  <link rel="stylesheet" href="/main.css"/>
+  <link rel="stylesheet" href="/main.css" />
 </head>
+
 <body>
-<div class="app">
-  <aside>
-    <h1>🐟 Tuners</h1>
-    <img src="fish.png" />
-
-    <button class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
-  </aside>
-
-  <main>
-    <input type="search" placeholder="Search..."
-      name="key"
-      hx-get="/search"
-      hx-trigger="keyup changed delay:500ms"
-      hx-target="#main-view" />
-
-    <div
-      hx-get="/tuners"
-      hx-trigger="load"
-      hx-target="#main-view"
-      kx-on:htmx:timeout="alert('Failed to fetch tuners')">
-      <div id="main-view"></div>
+  <div class="app">
+    <div class="header">
+      <h1><span>   🐟Tuners</span></h1>
+      <input type="search" placeholder="Search..." name="key" hx-get="/search" hx-trigger="keyup changed delay:500ms"
+        hx-target="#main-view" />
     </div>
-  </main>
-</div>
+    <div class="content">
+      <aside>
+        <img src="fish.png" />
+        <button class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
+      </aside>
+
+      <main>
+
+        <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
+          kx-on:htmx:timeout="alert('Failed to fetch tuners')">
+          <div id="main-view"></div>
+        </div>
+      </main>
+    </div>
+  </div>
 </body>
+
 </html>
