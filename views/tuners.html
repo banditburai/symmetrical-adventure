@@ -1,19 +1,42 @@
+<ul class="tuners">
+  <span class="num-results"></span><strong>Number of results:</strong>
+  <%= it.tuners.length %></span>
+    <% it.tuners.forEach(tuner=> { %>
+      <li>
+        <header>
 
-<ul class="tuners">  
-  <span class = "num-results"></span><strong>Number of results:</strong> <%= it.tuners.length %></span>
-  <% it.tuners.forEach(tuner=> { %>
-    <li>
-      <header>        
-        <div class="container">
-          <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">
-            <%= tuner.prompt %>
-          </h2>
-        </div>
-        <nav>
-          <button>
-            <a href="<%= tuner.url %>" target="_blank" rel="noopener noreferrer" class="button view">
-              <svg width="22" height="22" viewBox="0 0 56.941 56.75" fill="currentColor">
-                <path d="M53.707,41.526c2.113-4.032,3.234-8.57,3.234-13.151C56.941,12.729,44.212,0,28.566,0S0.191,12.729,0.191,28.375
+          <div class="likes">
+
+            <div id="like-count"><em>NUM</em>
+
+              <button class="like">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  class="icon icon-tabler icon-tabler-thumb-up like-icon"
+                  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round">
+
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+
+                  <path
+                    d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3">
+                  </path>
+
+                </svg>
+                </button>
+              </div>
+                
+                <div class="container">
+                  <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">
+                    <%= tuner.prompt %>
+                  </h2>
+                </div>
+                </div>
+                <nav>
+                  <button>
+                    <a href="<%= tuner.url %>" target="_blank" rel="noopener noreferrer" class="button view">
+                      <svg width="22" height="22" viewBox="0 0 56.941 56.75" fill="currentColor">
+                        <path d="M53.707,41.526c2.113-4.032,3.234-8.57,3.234-13.151C56.941,12.729,44.212,0,28.566,0S0.191,12.729,0.191,28.375
 	S12.919,56.75,28.566,56.75c4.376,0,8.56-0.976,12.452-2.882l2.699,2.699c0.365,0.364,0.851,0.564,1.367,0.564
 	s1.002-0.2,1.367-0.565l9.79-9.791c0.364-0.364,0.565-0.85,0.565-1.367c0-0.518-0.201-1.003-0.565-1.367L53.707,41.526z
 	 M49.056,36.91c1.683-0.519,3.349-1.103,4.99-1.748c-0.447,1.685-1.063,3.32-1.833,4.881L49.056,36.91z M48.06,26.289
@@ -36,37 +59,38 @@
 	c0.552-1.411,1.059-2.842,1.519-4.289l2.762,2.762C38.127,53.004,36.699,53.513,35.236,53.894z M45.084,55.106L32.69,42.711
 	c-0.364-0.365-0.85-0.565-1.367-0.565s-1.003,0.201-1.367,0.565l-2.808,2.808l-0.062-18.042l18.103,0l-2.804,2.804
 	c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black stroke-width="3" />
-              </svg>
-            </a>
-          </button>
-          <button class="edit" hx-get="/tuners/form/<%= tuner.id %>">
-            <svg viewBox="0 0 1024 1024">
-              <path
-                d="M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 0 0 0-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 0 0 9.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z" />
-            </svg>
-          </button>
-          <button class="remove" hx-delete="/tuners/<%= tuner.id %>" hx-confirm="Are you sure?">
-            <svg viewBox="0 0 1024 1024">
-              <path
-                d="M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z" />
-            </svg>
-          </button>
-        </nav>
-      </header>
+                      </svg>
+                    </a>
+                  </button>
+                  <button class="edit" hx-get="/tuners/form/<%= tuner.id %>">
+                    <svg viewBox="0 0 1024 1024">
+                      <path
+                        d="M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 0 0 0-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 0 0 9.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z" />
+                    </svg>
+                  </button>
+                  <button class="remove" hx-delete="/tuners/<%= tuner.id %>" hx-confirm="Are you sure?">
+                    <svg viewBox="0 0 1024 1024">
+                      <path
+                        d="M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z" />
+                    </svg>
+                  </button>
+                </nav>
+                
+        </header>
 
-      <p>
-        <strong>Size:</strong>
-        <%= tuner.size %><br>
-        <% if(tuner.comments) { %>
-          <p>
-            <strong>Comments:</strong>
-            <%= tuner.comments %>
-          </p>
-        <% } %>
+        <p>
+          <strong>Size:</strong>
+          <%= tuner.size %><br>
+            <% if(tuner.comments) { %>
+              <p>
+                <strong>Comments:</strong>
+                <%= tuner.comments %>
+              </p>
+              <% } %>
 
 
-    </li>
-    <% }) %>
+      </li>
+      <% }) %>
 
 </ul>
 

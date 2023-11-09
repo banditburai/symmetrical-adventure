@@ -210,6 +210,9 @@ form {
   font-size: 18px;
 }
 
+
+
+
 .tuners header nav {
   margin-top: 5px;
   margin-left: auto;
@@ -232,11 +235,31 @@ form {
 .tuners header button svg {
   width: 22px;
   height: 22px;
+  line-height: 1em;
   fill: #777;
 }
 
 .tuners p {
   margin: 5px 0 0;
+}
+
+.tuners .likes{
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.tuners #like-count{
+  gap: 1px;
+}
+.tuners #like-count em{  
+  font-size: 12px;
+  margin-right: -10px;  
+  text-align: center;
+}
+#like-count em, #like-count svg {
+  vertical-align: -webkit-baseline-middle;
+  fill:#D8D8D8;  
+  padding: 0;
 }
 
 .size-options {
@@ -348,6 +371,7 @@ main{
 
 .social-footer {
   display: flex;
+  position: sticky;
   flex-direction: column;
   justify-content: center;
   align-items: center;
