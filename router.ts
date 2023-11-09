@@ -1,5 +1,5 @@
 import { Router, Context, send } from "./deps.ts";
-import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners, FilterOptions } from "./service.ts";
+import { getTuner, EmptyTuner, getTuners, createTuner, updateTuner, deleteTuner, searchTuners, FilterOptions, incrementLikes } from "./service.ts";
 
 async function getTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
@@ -53,7 +53,7 @@ async function createTunerHandler(ctx: Context) {
   if (id) {
     await updateTuner({id, prompt, url, size, comments});
   } else {
-    await createTuner({prompt, url, size, comments});
+    await createTuner({prompt, url, size, comments, likes: 0 });
   }
 
   ctx.render("tuners.html", {
@@ -103,6 +103,19 @@ async function removeTruncateClassHandler(ctx: Context) {
   ctx.response.body = tunerHtml;
 }
 
+async function addLikeHandler(ctx: Context) {
+  const { id } = ctx.params; // Get the id from the request parameters
+  const tuner = await incrementLikes(id);
+  if (tuner) {
+    ctx.response.status = 200;
+    ctx.response.body = tuner.likes; // Send back the new like count
+  } else {
+    ctx.response.status = 404;
+    ctx.response.body = "Tuner not found";
+  }
+}
+
+
 export default new Router()
   .get("/", ctx => ctx.render("index.html"))
   .get("/search", searchTunersHandler)
@@ -110,6 +123,7 @@ export default new Router()
   .get("/tuners/form/:id?", tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", createTunerHandler)
+  .post("/tuners/like/:id", addLikeHandler) 
   .delete("/tuners/:id", deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler)

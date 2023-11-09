@@ -6,6 +6,7 @@ type Tuner = {
   url: string;
   size: string;
   comments: string;
+  likes: number;
 }
 
 type Pill = {
@@ -20,6 +21,7 @@ export const EmptyTuner: Tuner = {
   url: "",
   size: "16",
   comments: "",
+  likes: 0,
 }
 
 export type FilterOptions = {
@@ -85,7 +87,7 @@ export async function getTuners(): Promise<Tuner[]> {
 
 export async function createTuner(tuner: Omit<Tuner, 'id'>): Promise<void> {
   const id = crypto.randomUUID();
-  await kv.set(["tuners", id], {...tuner, id});
+  await kv.set(["tuners", id], {...tuner, id, likes: 0});
 }
 
 export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }): Promise<void> {
@@ -103,6 +105,17 @@ export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }):
 
   await kv.set(["tuners", tunerUpdate.id], updatedTuner); // Directly store the updated tuner.
 }
+
+export async function incrementLikes(id: string): Promise<Tuner | undefined> {
+  const tuner = await getTuner(id);
+  if (tuner) {
+    tuner.likes = (tuner.likes || 0) + 1; // Ensure likes is a number and increment
+    await kv.set(["tuners", id], tuner);
+    return tuner; // Return the updated tuner
+  }
+  return undefined; // Return undefined if tuner does not exist
+}
+
 
 export async function deleteTuner(id: string): Promise<void> {
   await kv.delete(["tuners", id]);
