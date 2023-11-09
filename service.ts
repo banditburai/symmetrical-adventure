@@ -1,3 +1,5 @@
+//service.ts
+
 const kv = await Deno.openKv();
 
 type Tuner = {
@@ -106,10 +108,13 @@ export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }):
   await kv.set(["tuners", tunerUpdate.id], updatedTuner); // Directly store the updated tuner.
 }
 
-export async function incrementLikes(id: string): Promise<Tuner | undefined> {
+export async function updateLike(id: string, liked: boolean): Promise<Tuner | undefined> {
   const tuner = await getTuner(id);
+  console.log("here");
   if (tuner) {
-    tuner.likes = (tuner.likes || 0) + 1; // Ensure likes is a number and increment
+    console.log(liked);
+    tuner.likes = liked ? tuner.likes + 1 : Math.max(0, tuner.likes - 1);
+  
     await kv.set(["tuners", id], tuner);
     return tuner; // Return the updated tuner
   }

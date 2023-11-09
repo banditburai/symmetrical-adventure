@@ -1,3 +1,4 @@
+
 <ul class="tuners">
   <span class="num-results"></span><strong>Number of results:</strong>
   <%= it.tuners.length %></span>
@@ -11,25 +12,28 @@
             </strong>
           </div>
           <div class="new-container">
-            <div class="likes">
+            <div class="like-wrapper" id="like-wrapper-<%= tuner.id %>">              
+              <input type="hidden" name="liked" form="like-form-<%= tuner.id %>" id="liked-state-<%= tuner.id %>" value="true" />            
+              <div class="like-count" id="like-count-<%= tuner.id %>"><em><%= tuner.likes || 0 %></em></div>
+              <button class="like <%= tuner.liked ? 'selected' : '' %>"
+                      hx-post="/tuners/like/<%= tuner.id %>"                      
+                      hx-swap="outerHTML"
+                      hx-target="#like-wrapper-<%= tuner.id %>"
+                      hx-trigger="click"                      
+                      hx-include="#liked-state-<%= tuner.id %>"> 
+                      
 
-              <div id="like-count-<%= tuner.id %>"><em>
-                  <%= tuner.likes || 0 %>
-                </em></div>
-              <button class="like" hx-post="/tuners/like/<%= tuner.id %>" hx-swap="outerHTML"
-                hx-target="#like-count-<%= tuner.id %>">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon like-icon" width="24" height="24"
+                      viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                      stroke-linejoin="round">
 
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-thumb-up like-icon"
-                  width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                  stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path
+                        d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3">
+                      </path>
 
-                  <path
-                    d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3">
-                  </path>
-
-                </svg>
+                    </svg>
               </button>
             </div>
             <div class="container">
@@ -109,4 +113,26 @@ c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black
     element.classList.toggle('expanded-prompt');
     element.classList.toggle('text-overflow-clamp');
   }
+
+  // Put this inside a <script> tag at the bottom of your HTML
+document.body.addEventListener('click', function(event) {
+  // Check if the clicked element is a like button or inside a like button
+  var button = event.target.closest('.like');
+  if (button) {
+    // Fetch the corresponding hidden input based on the tuner ID
+    var tunerId = button.getAttribute('hx-post').split('/').pop();
+    var hiddenInput = document.querySelector('input#liked-state-' + tunerId);
+    
+    // Toggle the value of the hidden input
+    if (hiddenInput) {
+      hiddenInput.value = hiddenInput.value === 'false' ? 'true' : 'false';
+    } else {
+      // Log an error if the hidden input is not found
+      console.error('Hidden input not found for tuner ID:', tunerId);
+    }
+  }
+});
+
+
+
 </script>

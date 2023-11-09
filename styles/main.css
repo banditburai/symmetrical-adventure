@@ -265,11 +265,15 @@ form {
   fill: #777;
 }
 
+.tuners .like.selected svg {
+  fill: #ffc107; 
+}
+
 .tuners p {
   margin: 5px 0 0;
 }
 
-.tuners .likes{
+.tuners .like-wrapper{
   display: flex;  
   align-items: flex-end;
   justify-content: flex-end;
@@ -288,6 +292,7 @@ form {
   fill:#D8D8D8;  
   padding: 0;
 }
+
 
 .tuners .entry-nav{
   display: flex;
