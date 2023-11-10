@@ -8,7 +8,11 @@
         <div class="tuner-info">
           <div class="sizebox">
             <strong>
-              <%= tuner.size %>
+              <% if (tuner.size === 'nonstandard') { %>
+                non<br>standard
+              <% } else { %>
+                <%= tuner.size %>
+              <% } %>
             </strong>
           </div>
           <div class="new-container">
@@ -97,12 +101,6 @@ c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black
           </div>
         </div>
 
-
-
-
-
-
-
       </li>
       <% }) %>
 
@@ -114,20 +112,16 @@ c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black
     element.classList.toggle('text-overflow-clamp');
   }
 
-  // Put this inside a <script> tag at the bottom of your HTML
+  
 document.body.addEventListener('click', function(event) {
-  // Check if the clicked element is a like button or inside a like button
+  
   var button = event.target.closest('.like');
-  if (button) {
-    // Fetch the corresponding hidden input based on the tuner ID
+  if (button) {    
     var tunerId = button.getAttribute('hx-post').split('/').pop();
-    var hiddenInput = document.querySelector('input#liked-state-' + tunerId);
-    
-    // Toggle the value of the hidden input
+    var hiddenInput = document.querySelector('input#liked-state-' + tunerId);    
     if (hiddenInput) {
       hiddenInput.value = hiddenInput.value === 'false' ? 'true' : 'false';
-    } else {
-      // Log an error if the hidden input is not found
+    } else {  
       console.error('Hidden input not found for tuner ID:', tunerId);
     }
   }

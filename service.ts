@@ -2,7 +2,7 @@
 
 const kv = await Deno.openKv();
 
-type Tuner = {
+export type Tuner = {
   id: string;
   prompt: string;
   url: string;
@@ -11,7 +11,7 @@ type Tuner = {
   likes: number;
 }
 
-type Pill = {
+export type Pill = {
   param: string;
   value: string;
   selected: boolean;  
@@ -109,10 +109,8 @@ export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }):
 }
 
 export async function updateLike(id: string, liked: boolean): Promise<Tuner | undefined> {
-  const tuner = await getTuner(id);
-  console.log("here");
-  if (tuner) {
-    console.log(liked);
+  const tuner = await getTuner(id);  
+  if (tuner) {    
     tuner.likes = liked ? tuner.likes + 1 : Math.max(0, tuner.likes - 1);
   
     await kv.set(["tuners", id], tuner);
