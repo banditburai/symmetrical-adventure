@@ -1,5 +1,6 @@
 //router.ts
 
+import { trimLeft } from "https://deno.land/x/eta@v1.12.3/polyfills.ts";
 import { Context, Router, send } from "./deps.ts";
 import {
   createTuner,
@@ -8,39 +9,39 @@ import {
   FilterOptions,
   getTuner,
   getTuners,
+  pills,
   searchTuners,
   updateLike,
-  updateTuner, 
-  pills
+  updateTuner,
 } from "./service.ts";
 
 async function getTunerHandler(ctx: Context) {
-          
   ctx.render("tuners.html", {
     tuners: await getTuners(),
   });
 }
 
 async function searchTunersHandler(ctx: Context) {
-  const searchParams = ctx.request.url.searchParams;  
+  const searchParams = ctx.request.url.searchParams;
   const filterOptions: FilterOptions = {
     key: searchParams.get("key") ?? undefined,
     size: searchParams.get("size") ?? undefined,
     raw: searchParams.get("raw") === "true" ? true : undefined,
     imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
   };
-  
-  const { tuners, count } = await searchTuners(filterOptions); 
 
-  
-  const updatedPills = pills.map(pill => ({
+  const { tuners, count } = await searchTuners(filterOptions);
+
+  const updatedPills = pills.map((pill) => ({
     ...pill,
-    selected: pill.param === 'size' ? pill.value === filterOptions.size :
-              pill.param === 'raw' ? filterOptions.raw :
-              pill.param === 'imgprompt' && filterOptions.imgprompt
+    selected: pill.param === "size"
+      ? pill.value === filterOptions.size
+      : pill.param === "raw"
+      ? filterOptions.raw
+      : pill.param === "imgprompt" && filterOptions.imgprompt,
   }));
   const isHtmx = ctx.request.headers.get("HX-Request");
-  
+
   const template = isHtmx ? "tuners.html" : "tuners.html";
   ctx.render(template, { tuners, count, pills: updatedPills });
 }
@@ -48,7 +49,8 @@ async function searchTunersHandler(ctx: Context) {
 async function createTunerHandler(ctx: Context) {
   const bodyResult = ctx.request.body({ type: "form-data" });
   const body = await bodyResult.value.read();
-  const { id, prompt, url, size, comments } = body.fields;
+  let { id, prompt, url, size, comments } = body.fields;
+  prompt = prompt || 'No prompt provided';
   if (id) {
     await updateTuner({ id, prompt, url, size, comments });
   } else {
@@ -90,6 +92,71 @@ async function imgHandler(ctx: Context) {
   });
 }
 
+async function validateUrlHandler(ctx: Context) {  
+  try {
+    const bodyResult = ctx.request.body({ type: "form-data" }); // Change to "form-data" for multipart
+    const formDataBody = await bodyResult.value.read(); // This is for "form-data"
+    let urlToValidate = formDataBody.fields.url; 
+    
+    urlToValidate = urlToValidate ? urlToValidate.trim() : "";
+    let isValid = false;
+    let errorMessage = "";
+
+    // Define URL validation patterns
+    const standardUrlPattern =
+      /^https:\/\/tuner\.midjourney\.com\/[A-Za-z0-9]{7}(?:\?answer=[A-Za-z0-9]+)?$/;
+    const codeUrlPattern =
+      /^https:\/\/tuner\.midjourney\.com\/code\/[A-Za-z0-9]+$/;
+
+    // Check if URL is valid
+    if (
+      urlToValidate &&
+      (standardUrlPattern.test(urlToValidate) ||
+       codeUrlPattern.test(urlToValidate))
+    ) {
+      isValid = true;
+    } else {
+      errorMessage = "Invalid URL. Please check and try again.";
+    }
+    const submitButtonDisabledAttribute = isValid ? '' : 'disabled';
+    const submitButtonUpdate = `
+    <div id="submit-button-container" hx-swap-oob="true">
+    <button name="form-submit" class="btn primary" ${submitButtonDisabledAttribute}>Save</button>
+  </div>
+`;
+    // Build response based on validation
+    if (isValid) {
+      // For a valid URL
+      ctx.response.body = `
+  <div hx-target="this" class="valid" hx-swap="outerHTML">
+    <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
+    name="url" id="form-url" hx-indicator="#ind"
+    placeholder="URL" value="${encodeURI(urlToValidate)}"/>
+    <img id="ind" src="/three-dots.svg" class="htmx-indicator" style="visibility:hidden;"/>
+  </div>
+  ${submitButtonUpdate}
+`;
+    } else {
+      // For an invalid URL
+ctx.response.body = `
+<div hx-target="this" hx-swap="outerHTML" class="error">
+  <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
+   name="url" id="form-url" hx-indicator="#ind"
+  placeholder="URL" value="${urlToValidate}"/>
+  <div class='error-message'>${errorMessage}</div>
+  <img id="url-ind" src="/three-dots.svg" class="htmx-indicator"/>
+</div>
+${submitButtonUpdate}
+`;
+    }
+  } catch (error) {
+    console.error("Error during URL validation:", error);
+    ctx.response.status = 500;
+    ctx.response.body = "Internal server error while validating URL";
+  }
+}
+
+
 async function removeTruncateClassHandler(ctx: Context) {
   const { id } = ctx.params;
   const tuner = await getTuner(id);
@@ -104,15 +171,15 @@ async function removeTruncateClassHandler(ctx: Context) {
 
 async function updateLikeHandler(ctx: Context) {
   const { id } = ctx.params;
-  const result = ctx.request.body({ type: 'form' }); // 'form', not 'form-data'
+  const result = ctx.request.body({ type: "form" });
   const formData = await result.value;
-  const likedParam = formData.get('liked'); // Use .get for URL encoded forms
-  const liked = likedParam === 'true';  
+  const likedParam = formData.get("liked");
+  const liked = likedParam === "true";
   const tuner = await updateLike(id, liked);
   if (tuner) {
     ctx.response.status = 200;
     const buttonClass = liked ? "selected" : "";
-    const hiddenInputValue = liked ? "false" : "true"; 
+    const hiddenInputValue = liked ? "false" : "true";
     ctx.response.body = `
       <div class="like-wrapper" id="like-wrapper-${tuner.id}">
       <input type="hidden" name="liked" form="like-form-${tuner.id}" id="liked-state-${tuner.id}" value="${hiddenInputValue}" />
@@ -147,14 +214,15 @@ async function updateLikeHandler(ctx: Context) {
 export default new Router()
   .get("/", (ctx) => ctx.render("index.html"))
   .get("/main.css", cssHandler)
-  .get("/fish.png", imgHandler)  
-  .get("/search", searchTunersHandler)  
+  .get("/fish.png", imgHandler)
+  .get("/three-dots.svg", imgHandler)
+  .get("/search", searchTunersHandler)
   .get("/tuners", getTunerHandler)
   .get("/tuners/form/:id?", tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", createTunerHandler)
+  .post("/form/url", validateUrlHandler)
   .post("/tuners/like/:id", updateLikeHandler)
   .delete("/tuners/:id", deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
-  .get("/logo.png", imgHandler);  
- 
+  .get("/logo.png", imgHandler);

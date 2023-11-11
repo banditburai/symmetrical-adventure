@@ -1,31 +1,34 @@
-<form
-  hx-post="/tuners"
-  hx-target="this"
-  hx-swap="outerHTML"
-  hx-encoding="multipart/form-data">
+<form hx-post="/tuners" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data">
 
   <input type="hidden" name="id" value="<%= it.id %>" />
   <textarea name="prompt" placeholder="Prompt"><%= it.prompt %></textarea>
-  <input type="url" name="url" value="<%= it.url %>" placeholder="URL"/>
-  
+  <div hx-target="this" hx-swap="outerHTML">
+    <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
+       name="url" id="form-url" hx-indicator="#ind"
+      placeholder="URL">
+    <img id="ind" src="/three-dots.svg" class="htmx-indicator" />
+  </div>
   <div class="size-options">
-    <input type="radio" id="size16" name="size" value="16" <% if(it.size == '16') { %>checked<% } %> />
-    <label for="size16">16</label>
-    <input type="radio" id="size32" name="size" value="32" <% if(it.size == '32') { %>checked<% } %> />
-    <label for="size32">32</label>
-    <input type="radio" id="size64" name="size" value="64" <% if(it.size == '64') { %>checked<% } %> />
-    <label for="size64">64</label>
-    <input type="radio" id="size128" name="size" value="128" <% if(it.size == '128') { %>checked<% } %> />
-    <label for="size128">128</label>
-    <input type="radio" id="sizenonstd" name="size" value="nonstandard" <% if(it.size == 'nonstandard') { %>checked<% } %> />
-    <label for="sizenonstd">Nonstandard</label>
-    <!-- ... other size options ... -->
+    <input type="radio" id="size16" name="size" value="16" <% if(it.size=='16' ) { %>checked<% } %> />
+      <label for="size16">16</label>
+      <input type="radio" id="size32" name="size" value="32" <% if(it.size=='32' ) { %>checked<% } %> />
+        <label for="size32">32</label>
+        <input type="radio" id="size64" name="size" value="64" <% if(it.size=='64' ) { %>checked<% } %> />
+          <label for="size64">64</label>
+          <input type="radio" id="size128" name="size" value="128" <% if(it.size=='128' ) { %>checked<% } %> />
+            <label for="size128">128</label>
+            <input type="radio" id="sizenonstd" name="size" value="nonstandard" <% if(it.size=='nonstandard' ) {
+              %>checked<% } %> />
+              <label for="sizenonstd">Nonstandard</label>
+              <!-- ... other size options ... -->
   </div>
 
   <textarea name="comments" placeholder="Comments"><%= it.comments %></textarea>
 
   <footer class="form-footer">
     <button class="btn secondary" hx-get="/tuners">Cancel</button>
-    <button class="btn primary">Save</button>
+    <div id="submit-button-container">
+      <button name="form-submit" class="btn primary" disabled>Save</button>
+    </div>
   </footer>
 </form>

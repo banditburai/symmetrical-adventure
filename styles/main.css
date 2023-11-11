@@ -435,3 +435,35 @@ main{
   width: 24px; /* adjust this value as needed */
   height: 24px; /* adjust this value as needed */
 }
+
+.error-message {
+  color:red; 
+  font-size: 0.9em; 
+}
+.error input {
+  border: 2px solid #CC0000; /* Change to border for a more obvious outline */
+  box-shadow: 0 0 5px #CC0000; /* Optional: Keep it for a glow effect */
+}
+
+/* Increase the size and color intensity of the box shadow for valid state */
+.valid input {
+  border: 1px solid #36cc00; /* Change to border for a more obvious outline */
+  box-shadow: 0 0 5px #36cc00; /* Optional: Keep it for a glow effect */
+}
+
+/* Adjust the indicator styles if needed */
+.htmx-indicator {
+  display: block; /* Keep it block to take up full width below the input */
+  height: 1em; /* Maintain fixed height for consistency */
+  margin-top: 0.5em; /* Adjust space between the input and the indicator if needed */
+}
+
+button:disabled, button:disabled:hover{
+  cursor: not-allowed; /* Show a 'not-allowed' cursor on hover */
+  opacity: 0.5; /* Tone down the button to indicate it's inactive */
+}
+
+button:enabled {
+  cursor: pointer; /* Standard cursor for clickable items */
+  opacity: 1; /* Full opacity for active buttons */
+}
