@@ -4,7 +4,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;1,100&display=swap"
-    rel="stylesheet">  
+    rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@1.9.7"></script>
   <link rel="stylesheet" href="/main.css" />
 </head>
@@ -22,17 +22,17 @@
         <h1><span>🐟Tuners</span></h1>
         <div class="search-section" hx-search-filter>
           <input type="search" id="search-input" placeholder="Search..." name="key" hx-get="/search"
-            hx-trigger="keyup changed delay:500ms" hx-target="#main-view" hx-push-url="true">
+            hx-trigger="keyup changed delay:500ms" hx-target="#main-view">
 
           <div class="pills">
-            <button class="pill" hx-get="/search" hx-vals='{"filter": "all"}' hx-push-url="true" hx-target="#main-view">All</button>
-            <button class="pill" hx-get="/search" hx-vals='{"size": "16"}' hx-push-url="true" hx-target="#main-view">16</button>
-            <button class="pill" hx-get="/search" hx-vals='{"size": "32"}' hx-push-url="true" hx-target="#main-view">32</button>
-            <button class="pill" hx-get="/search" hx-vals='{"size": "64"}' hx-push-url="true" hx-target="#main-view">64</button>
-            <button class="pill" hx-get="/search" hx-vals='{"size": "128"}'  hx-push-url="true" hx-target="#main-view">128</button>
-            <button class="pill" hx-get="/search" hx-vals='{"size": "nonstandard"}' hx-push-url="true" hx-target="#main-view">Nonstandard</button>
-            <button class="pill" hx-get="/search" hx-vals='{"raw": "true"}'  hx-push-url="true" hx-target="#main-view">Raw</button>
-            <button class="pill" hx-get="/search" hx-vals='{"imgprompt": "true"}' hx-push-url="true" hx-target="#main-view">Image</button>
+            <button class="pill" id="show-all" hx-target="#main-view">All</button>
+            <button class="pill" hx-vals='{"size": "16"}' hx-target="#main-view">16</button>
+            <button class="pill" hx-vals='{"size": "32"}' hx-target="#main-view">32</button>
+            <button class="pill" hx-vals='{"size": "64"}' hx-target="#main-view">64</button>
+            <button class="pill" hx-vals='{"size": "128"}' hx-target="#main-view">128</button>
+            <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
+            <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
+            <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>
           </div>
         </div>
 
@@ -91,81 +91,179 @@
 </html>
 
 
-<!-- <script>
-  // This script assumes you are running it in a browser environment
-  document.addEventListener("DOMContentLoaded", function() {
-    const searchParams = new URLSearchParams(window.location.search);
-    const searchKey = searchParams.get('key');
-    const searchInput = document.getElementById('search-input');    
-    if (searchKey && searchInput) {    
-      searchInput.value = searchKey;            
-      htmx.trigger(searchInput, 'keyup'); 
-    }   
+<script>
 
-  });   
-  </script> -->
+  document.addEventListener("DOMContentLoaded", function () {
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const searchParams = new URLSearchParams(window.location.search);
-      const searchInput = document.getElementById('search-input');
-      const pills = document.querySelectorAll('.pill');
-    
-      // Function to update the URL with search and pill filters
-      function updateURLandTriggerHTMX() {
-        let newSearchParams = new URLSearchParams();
-    
-        // Add the search key if it exists
-        if (searchInput.value) {
-          newSearchParams.set('key', searchInput.value);
-        }
-    
-        // Add the selected pill filters
-        pills.forEach((pill) => {
-          if (pill.classList.contains('selected')) {
-            let filter = pill.dataset.filter;
-            let value = pill.dataset.value;
-            newSearchParams.append(filter, value);
-          }
-        });
-    
-        // Push the updated URL state
-        window.history.pushState({}, '', `${location.pathname}?${newSearchParams}`);
-    
-        // Trigger the HTMX request
-        htmx.trigger(searchInput, 'keyup'); // Trigger the search event
+    // Select DOM elements that will be used multiple times.
+    const searchInput = document.getElementById('search-input');
+    const pills = document.querySelectorAll('.pills .pill');
+    const allPill = document.getElementById('show-all');
+    const sizePills = document.querySelectorAll('.pill[hx-vals*="size"]');
+    const filterPills = document.querySelectorAll('.pill[hx-vals*="true"]');
+
+    // Updates the 'All' pill's visual state and URL parameters.
+    function updateAllPillState() {
+      // 'All' pill should be selected if no other filter is active.
+      const isAnyFilterPillSelected = Array.from(pills).some(pill => pill !== allPill && pill.classList.contains('selected'));
+      if (!isAnyFilterPillSelected) {
+        allPill.classList.add('selected');
+      } else {
+        allPill.classList.remove('selected');
       }
-    
-      // Attach click event to pills for toggling selection
+    }
+
+    function updateURL() {
+      // Start with an empty URLSearchParams object.
+      const params = new URLSearchParams();
+
+      // Add the search term if present.
+      if (searchInput.value) {
+        params.set('key', searchInput.value.trim());
+      }
+
+      // Rebuild the search parameters based on selected pills.
       pills.forEach(pill => {
-        pill.addEventListener('click', function() {
-          this.classList.toggle('selected'); // Toggle the 'selected' class on click
-          updateURLandTriggerHTMX(); // Update URL and trigger HTMX
-        });
+        if (pill !== allPill && pill.classList.contains('selected')) {
+          const vals = JSON.parse(pill.getAttribute('hx-vals') || '{}');
+          Object.keys(vals).forEach(key => {
+            params.set(key, vals[key]);
+          });
+        } 
+       
       });
-    
-      // Prepopulate search input and pills based on URL params
-      if (searchParams.has('key')) {
-        searchInput.value = searchParams.get('key');
+
+      // Update the browser's URL.
+      const newSearchString = params.toString();
+      const newUrl = window.location.pathname + (newSearchString ? '?' + newSearchString : '');
+      history.replaceState({}, '', newUrl);
+
+      // Update visual state for the 'All' button.
+      updateAllPillState();
+    }
+
+
+    // Clears all filter selections except for the 'All' pill and triggers a search update.
+    function resetFilters() {
+      // Clear all selections and reset the URL to the base path.
+      Array.from(pills).forEach(pill => pill.classList.remove('selected'));
+      allPill.classList.add('selected');
+      searchInput.value = '';
+
+      const newUrl = window.location.pathname;
+      history.replaceState({}, '', newUrl);
+      triggerHTMXUpdate(); // Trigger search update to fetch and display results.
+    }
+
+    // Prepopulates the search input based on the URL search parameters.
+    function prepopulateSearchInput() {
+      const params = new URLSearchParams(window.location.search);
+      const key = params.get('key');
+      if (key) {
+        searchInput.value = key;
       }
-      pills.forEach((pill) => {
-        let filter = pill.dataset.filter;
-        let value = pill.dataset.value || 'true'; // Default to 'true' for toggle-type filters
-        if (searchParams.getAll(filter).includes(value)) {
-          pill.classList.add('selected');
+    }
+
+
+    // Build search parameters from the current state for an HTMX request.
+    function buildSearchParams() {
+      // Construct an object to hold search parameters.
+      const searchParams = {};
+      if (searchInput.value) {
+        searchParams.key = searchInput.value; // Include the search input if present.
+      }
+      Array.from(pills).filter(pill => pill !== allPill && pill.classList.contains('selected')).forEach(pill => {
+        const vals = JSON.parse(pill.getAttribute('hx-vals') || '{}');
+        Object.assign(searchParams, vals); // Merge pill values into search parameters.
+      });
+      return searchParams;
+    }
+
+    // Event listeners.
+    searchInput.addEventListener('input', () => {
+      updateStateAndView();
+    });
+
+    allPill.addEventListener('click', resetFilters); // Reset filters when 'All' pill is clicked.
+
+    // Handle click events for size pills with exclusive selection.
+    Array.from(sizePills).forEach(pill => {
+      pill.addEventListener('click', () => {
+        const alreadySelected = pill.classList.contains('selected');
+        Array.from(sizePills).forEach(sizePill => sizePill.classList.remove('selected')); // Remove 'selected' from all size pills first.
+        if (!alreadySelected) {
+          pill.classList.add('selected'); // Add 'selected' only if it wasn't already selected.
         }
-      });
-    
-      // If there are search parameters, trigger the search automatically on page load
-      if (searchParams.toString() !== '') {
-        htmx.trigger(searchInput, 'keyup'); // Trigger the search event
-      }
-    
-      // Update pill selection when navigating history
-      window.addEventListener('popstate', function() {
-        // Code to update pill selection from URL
-        // ...
+        // It's important to call updateStateAndView after modifying the pill classes.
+        updateStateAndView();
       });
     });
-    </script>
     
+
+    // Handle click events for other filter pills, allowing combination of filters.
+    Array.from(filterPills).forEach(pill => {
+      pill.addEventListener('click', () => {
+        pill.classList.toggle('selected'); // Toggle selection state.
+        updateStateAndView();
+      });
+    });
+
+    function updatePillSelectionFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      pills.forEach(pill => {
+        const vals = pill.getAttribute('hx-vals') ? JSON.parse(pill.getAttribute('hx-vals')) : {};
+        let isSelected = Object.keys(vals).every(key => {
+          let paramValue = params.get(key);
+          return String(vals[key]) === String(paramValue);
+        });
+        pill.classList.toggle('selected', isSelected);
+      });
+
+      updateAllPillState();
+    }
+
+
+    // New consolidated function to update state and view.
+    function updateStateAndView() {
+      updateURL();
+      triggerHTMXUpdate();
+    }
+
+    // Function to build the base URL or URL with search parameters
+    function constructHTMXGetUrl() {
+      // Check if 'All' pill is selected to decide the base URL
+      const isAllSelected = allPill.classList.contains('selected');
+      const baseUrl = "/search"; // Replace with your actual search endpoint
+
+      // If 'All' is selected, return the base search URL without parameters
+      if (isAllSelected) {
+        return baseUrl;
+      } else {
+        // If 'All' is not selected, build the URL with search parameters as before
+        const searchParams = buildSearchParams();
+        return baseUrl + '?' + new URLSearchParams(searchParams).toString();
+      }
+    }
+
+
+    // Function to trigger the HTMX request with the new URL
+    function triggerHTMXUpdate() {
+      const htmxTarget = htmx.find("#main-view");
+      const newUrl = constructHTMXGetUrl();
+      htmx.ajax('GET', newUrl, htmxTarget);
+    }
+
+
+    // Listen to 'popstate' to handle browser navigation events.
+    window.addEventListener('popstate', () => {
+      updatePillSelectionFromURL();
+      updateStateAndView(); // Update pills and URL without pushing a new state.      
+    });
+
+    // Trigger initial search update to load the correct tuners based on URL state.
+    prepopulateSearchInput();
+    updatePillSelectionFromURL();
+    updateStateAndView();
+  });
+
+</script>

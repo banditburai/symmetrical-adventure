@@ -39,18 +39,10 @@ async function searchTunersHandler(ctx: Context) {
               pill.param === 'raw' ? filterOptions.raw :
               pill.param === 'imgprompt' && filterOptions.imgprompt
   }));
-  // Check if the request is from HTMX
   const isHtmx = ctx.request.headers.get("HX-Request");
   
-  const template = isHtmx ? "tuners.html" : "index.html";
+  const template = isHtmx ? "tuners.html" : "tuners.html";
   ctx.render(template, { tuners, count, pills: updatedPills });
-
-  // if (isHtmx) {    
-  //   ctx.render("tuners.html", { tuners, count, pills });
-  // } else {    
-  //   ctx.render("index.html", { tuners, count, pills });
-  //   ctx.response.redirect("/tuners");
-  // }
 }
 
 async function createTunerHandler(ctx: Context) {

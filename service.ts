@@ -35,7 +35,6 @@ export type FilterOptions = {
 };
 
 export let pills: Pill[] = [
-  { param: 'all', value: 'all', selected: true },
   { param: 'size', value: '16', selected: false },
   { param: 'size', value: '32', selected: false },
   { param: 'size', value: '64', selected: false },
@@ -59,11 +58,6 @@ export async function searchTuners(options: FilterOptions): Promise<{tuners: Tun
 
   return { tuners: filteredTuners, count: filteredTuners.length };
 }
-// export async function searchTuners(key: string) {
-//   const tuners = await getTuners();
-//   return tuners
-//     .filter(it => it.prompt.indexOf(key) > -1)    
-// }
 
 export async function getNumberOfEntries(): Promise<number> {
   const tuners = await getTuners();

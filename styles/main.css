@@ -169,10 +169,6 @@ input[type="search"] {
   transition: background-color 0.3s ease;
 }
 
-.pills button.selected {
-  background-color: #ba7d7d;
-}
-
 ul {
   list-style-type: none;
   margin: 0;
@@ -367,6 +363,11 @@ input[type="search"]:focus {
   white-space: normal;
   width: 95%;
 }
+
+.pill.selected {
+  background-color: #ba7d7d;
+}
+
 
 @media (max-width: 800px) {
   .header, .content {
