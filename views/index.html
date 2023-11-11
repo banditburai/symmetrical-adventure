@@ -21,7 +21,7 @@
 
         <h1><span>🐟Tuners</span></h1>
         <div class="search-section" hx-search-filter>
-          <input type="search" id="search-input" placeholder="Search..." name="key" hx-get="/search"
+          <input type="search" id="search-input" placeholder="Search..." name="key"
             hx-trigger="keyup changed delay:500ms" hx-target="#main-view">
 
           <div class="pills">
@@ -181,7 +181,7 @@
 
     // Event listeners.
     searchInput.addEventListener('input', () => {
-      updateStateAndView();
+      updateStateAndView();      
     });
 
     allPill.addEventListener('click', resetFilters); // Reset filters when 'All' pill is clicked.
@@ -225,30 +225,24 @@
 
     // New consolidated function to update state and view.
     function updateStateAndView() {
-      updateURL();
+      updateURL();     
       triggerHTMXUpdate();
     }
 
     // Function to build the base URL or URL with search parameters
-    function constructHTMXGetUrl() {
-      // Check if 'All' pill is selected to decide the base URL
-      const isAllSelected = allPill.classList.contains('selected');
-      const baseUrl = "/search"; // Replace with your actual search endpoint
-
-      // If 'All' is selected, return the base search URL without parameters
-      if (isAllSelected) {
-        return baseUrl;
-      } else {
-        // If 'All' is not selected, build the URL with search parameters as before
-        const searchParams = buildSearchParams();
-        return baseUrl + '?' + new URLSearchParams(searchParams).toString();
-      }
-    }
-
+function constructHTMXGetUrl() {
+  // Extract the base URL and start building the full URL.
+  const baseUrl = "/search";
+  const searchParams = buildSearchParams(); // This includes both filter and search key parameters.
+  
+  // If there are parameters to add to the URL, append them.
+  const queryString = new URLSearchParams(searchParams).toString();
+  return baseUrl + (queryString ? '?' + queryString : ''); // Append parameters if any exist.
+}
 
     // Function to trigger the HTMX request with the new URL
     function triggerHTMXUpdate() {
-      const htmxTarget = htmx.find("#main-view");
+      const htmxTarget = htmx.find("#main-view");      
       const newUrl = constructHTMXGetUrl();
       htmx.ajax('GET', newUrl, htmxTarget);
     }
@@ -256,6 +250,7 @@
 
     // Listen to 'popstate' to handle browser navigation events.
     window.addEventListener('popstate', () => {
+
       updatePillSelectionFromURL();
       updateStateAndView(); // Update pills and URL without pushing a new state.      
     });
