@@ -413,15 +413,16 @@ main{
 
 .social-footer {
   display: flex;
-  position: sticky;
+  position: fixed;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 10px 0; /* adjust this value as needed */
+  padding: 10px 0;
+  z-index: 10; 
 }
 
 .social-media-links {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   display: flex;
@@ -432,8 +433,8 @@ main{
 }
 
 .social-media-links img {
-  width: 24px; /* adjust this value as needed */
-  height: 24px; /* adjust this value as needed */
+  width: 24px; 
+  height: 24px; 
 }
 
 .error-message {

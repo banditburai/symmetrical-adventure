@@ -1,6 +1,5 @@
 //router.ts
 
-import { trimLeft } from "https://deno.land/x/eta@v1.12.3/polyfills.ts";
 import { Context, Router, send } from "./deps.ts";
 import {
   createTuner,
@@ -21,6 +20,19 @@ async function getTunerHandler(ctx: Context) {
   });
 }
 
+function sanitizeImageLinksForHTML(text: string) {
+    const imageUrlRegex = /https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/gi;
+    const mjRunUrlRegex = /https:\/\/s\.mj\.run\/\S+/gi;
+    
+    // Replace image URLs with [IMG]
+    text = text.replace(imageUrlRegex, '[IMG]');
+    
+    // Replace s.mj.run URLs with [IMG]
+    text = text.replace(mjRunUrlRegex, '[IMG]');
+    
+    return text;
+  }
+
 async function searchTunersHandler(ctx: Context) {
   const searchParams = ctx.request.url.searchParams;
   const filterOptions: FilterOptions = {
@@ -30,7 +42,14 @@ async function searchTunersHandler(ctx: Context) {
     imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
   };
 
-  const { tuners, count } = await searchTuners(filterOptions);
+  let { tuners, count } = await searchTuners(filterOptions);
+  tuners = tuners.map((tuner) => {
+    const sanitizedPrompt = sanitizeImageLinksForHTML(tuner.prompt);
+    return {
+      ...tuner,
+      prompt: sanitizedPrompt,
+    };
+  });
 
   const updatedPills = pills.map((pill) => ({
     ...pill,
@@ -50,7 +69,7 @@ async function createTunerHandler(ctx: Context) {
   const bodyResult = ctx.request.body({ type: "form-data" });
   const body = await bodyResult.value.read();
   let { id, prompt, url, size, comments } = body.fields;
-  prompt = prompt || 'No prompt provided';
+  prompt = prompt || "No prompt provided";
   if (id) {
     await updateTuner({ id, prompt, url, size, comments });
   } else {
@@ -92,12 +111,12 @@ async function imgHandler(ctx: Context) {
   });
 }
 
-async function validateUrlHandler(ctx: Context) {  
+async function validateUrlHandler(ctx: Context) {
   try {
     const bodyResult = ctx.request.body({ type: "form-data" }); // Change to "form-data" for multipart
     const formDataBody = await bodyResult.value.read(); // This is for "form-data"
-    let urlToValidate = formDataBody.fields.url; 
-    
+    let urlToValidate = formDataBody.fields.url;
+
     urlToValidate = urlToValidate ? urlToValidate.trim() : "";
     let isValid = false;
     let errorMessage = "";
@@ -112,13 +131,13 @@ async function validateUrlHandler(ctx: Context) {
     if (
       urlToValidate &&
       (standardUrlPattern.test(urlToValidate) ||
-       codeUrlPattern.test(urlToValidate))
+        codeUrlPattern.test(urlToValidate))
     ) {
       isValid = true;
     } else {
       errorMessage = "Invalid URL. Please check and try again.";
     }
-    const submitButtonDisabledAttribute = isValid ? '' : 'disabled';
+    const submitButtonDisabledAttribute = isValid ? "" : "disabled";
     const submitButtonUpdate = `
     <div id="submit-button-container" hx-swap-oob="true">
     <button name="form-submit" class="btn primary" ${submitButtonDisabledAttribute}>Save</button>
@@ -138,7 +157,7 @@ async function validateUrlHandler(ctx: Context) {
 `;
     } else {
       // For an invalid URL
-ctx.response.body = `
+      ctx.response.body = `
 <div hx-target="this" hx-swap="outerHTML" class="error">
   <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
    name="url" id="form-url" hx-indicator="#ind"
@@ -155,7 +174,6 @@ ${submitButtonUpdate}
     ctx.response.body = "Internal server error while validating URL";
   }
 }
-
 
 async function removeTruncateClassHandler(ctx: Context) {
   const { id } = ctx.params;

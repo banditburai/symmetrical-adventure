@@ -44,7 +44,6 @@ export let pills: Pill[] = [
   { param: 'imgprompt', value: 'true', selected: false },
 ];
 
-
 export async function searchTuners(options: FilterOptions): Promise<{tuners: Tuner[], count: number}> {
   const tuners = await getTuners();
   const filteredTuners = tuners.filter(tuner => {
