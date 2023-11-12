@@ -34,7 +34,7 @@ export type FilterOptions = {
  
 };
 
-export let pills: Pill[] = [
+export const pills: Pill[] = [
   { param: 'size', value: '16', selected: false },
   { param: 'size', value: '32', selected: false },
   { param: 'size', value: '64', selected: false },

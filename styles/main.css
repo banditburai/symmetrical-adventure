@@ -26,6 +26,11 @@ body {
   
 }
 
+#auth-links, #add-button {
+  display: flex;
+  margin-right: 10px;  
+} 
+
 .header-row{
   display: flex;
   display: flex;
@@ -35,9 +40,15 @@ body {
 }
 .top-nav {
   display: flex;
-  /* flex-direction: column; */  
+  margin-top: 15px; 
   justify-content: flex-end;
-  align-items: flex-end;
+  align-items: center;
+  
+}
+#user-button {
+  display: flex;
+  align-items: center;
+  margin-left: var(--margin-sm); /* Left margin for spacing */
 }
 
 .header {
@@ -47,9 +58,6 @@ body {
   /* min-width: 500px; */
 }
 
-#add-button {  
-  margin-top: 15px;
-}
 
 h1 {
   align-self: flex-start;

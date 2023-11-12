@@ -7,15 +7,26 @@
     rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@1.9.7"></script>
   <link rel="stylesheet" href="/main.css" />
+
 </head>
 
 <body>
+  <script async crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_ZXhhY3QtaW5zZWN0LTAuY2xlcmsuYWNjb3VudHMuZGV2JA" onload="window.Clerk.load()"
+    src="https://exact-insect-0.clerk.accounts.dev/npm/@clerk/clerk-js@4/dist/clerk.browser.js" type="text/javascript">
+    </script>
+
   <div class="app">
 
     <div class="header-row">
       <div class="top-nav">
         <button id="add-button" class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
-
+        <div id="auth-links">          
+          <button id="sign-in-button" class="btn primary" onclick="Clerk.openSignIn()">Sign In</button>
+        </div>        
+        <div id="user-button"></div>
+        
+      </div>
       </div>
       <div class="header">
 
@@ -51,6 +62,57 @@
         </main>
       </div>
     </div>
+
+
+ <script>  
+const publishableKey = "pk_test_aGFuZHktbWFydGVuLTM4LmNsZXJrLmFjY291bnRzLmRldiQ"; 
+const frontendApi = 'https://exact-insect-0.clerk.accounts.dev';
+const version = '4.65.0';
+
+const startClerk = async () => {
+  const Clerk = window.Clerk;
+
+  try {
+    
+    await Clerk.load();
+    console.log("see here");
+    const userButton = document.getElementById("user-button");
+    const authLinks = document.getElementById("auth-links");
+
+    Clerk.addListener(({ user }) => {
+      
+      authLinks.style.display = user ? "none" : "block";
+    });
+
+    if (Clerk.user) {
+      // Mount user button component
+      Clerk.mountUserButton(userButton, {        
+        afterSignOutUrl: "/"
+    });
+     
+     
+    }
+
+    
+  } catch (err) {
+    console.error("Error starting Clerk: ", err);
+  }
+};
+
+(() => {
+  const script = document.createElement("script");
+  script.setAttribute("data-clerk-publishable-key", publishableKey);
+  script.async = true;
+  script.src = `https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
+  script.crossOrigin = "anonymous";
+  script.addEventListener("load", startClerk);
+  script.addEventListener("error", () => {
+    document.getElementById("no-frontend-api-warning").hidden = false;
+  });
+  document.body.appendChild(script);
+})();
+</script>
+
 </body>
 
 <footer class="" social-footer>
@@ -63,6 +125,7 @@
           fill="#5865F2" fill-rule="nonzero">
 
         </path>
+        </svg>
     </a>
     <a href="https://twitter.com/promptsiren" target="_blank">
       <svg viewBox="328 355 335 276" xmlns="http://www.w3.org/2000/svg">
@@ -92,7 +155,6 @@
 
 
 <script>
-
   document.addEventListener("DOMContentLoaded", function () {
 
     // Select DOM elements that will be used multiple times.
@@ -129,8 +191,8 @@
           Object.keys(vals).forEach(key => {
             params.set(key, vals[key]);
           });
-        } 
-       
+        }
+
       });
 
       // Update the browser's URL.
@@ -181,7 +243,7 @@
 
     // Event listeners.
     searchInput.addEventListener('input', () => {
-      updateStateAndView();      
+      updateStateAndView();
     });
 
     allPill.addEventListener('click', resetFilters); // Reset filters when 'All' pill is clicked.
@@ -198,7 +260,7 @@
         updateStateAndView();
       });
     });
-    
+
 
     // Handle click events for other filter pills, allowing combination of filters.
     Array.from(filterPills).forEach(pill => {
@@ -212,8 +274,8 @@
       const params = new URLSearchParams(window.location.search);
       pills.forEach(pill => {
         const vals = pill.getAttribute('hx-vals') ? JSON.parse(pill.getAttribute('hx-vals')) : {};
-        let isSelected = Object.keys(vals).every(key => {
-          let paramValue = params.get(key);
+        const isSelected = Object.keys(vals).every(key => {
+          const paramValue = params.get(key);
           return String(vals[key]) === String(paramValue);
         });
         pill.classList.toggle('selected', isSelected);
@@ -222,31 +284,29 @@
       updateAllPillState();
     }
 
-
     // New consolidated function to update state and view.
     function updateStateAndView() {
-      updateURL();     
+      updateURL();
       triggerHTMXUpdate();
     }
 
     // Function to build the base URL or URL with search parameters
-function constructHTMXGetUrl() {
-  // Extract the base URL and start building the full URL.
-  const baseUrl = "/search";
-  const searchParams = buildSearchParams(); // This includes both filter and search key parameters.
-  
-  // If there are parameters to add to the URL, append them.
-  const queryString = new URLSearchParams(searchParams).toString();
-  return baseUrl + (queryString ? '?' + queryString : ''); // Append parameters if any exist.
-}
+    function constructHTMXGetUrl() {
+      // Extract the base URL and start building the full URL.
+      const baseUrl = "/search";
+      const searchParams = buildSearchParams(); // This includes both filter and search key parameters.
+
+      // If there are parameters to add to the URL, append them.
+      const queryString = new URLSearchParams(searchParams).toString();
+      return baseUrl + (queryString ? '?' + queryString : ''); // Append parameters if any exist.
+    }
 
     // Function to trigger the HTMX request with the new URL
     function triggerHTMXUpdate() {
-      const htmxTarget = htmx.find("#main-view");      
+      const htmxTarget = htmx.find("#main-view");
       const newUrl = constructHTMXGetUrl();
       htmx.ajax('GET', newUrl, htmxTarget);
     }
-
 
     // Listen to 'popstate' to handle browser navigation events.
     window.addEventListener('popstate', () => {
@@ -260,5 +320,6 @@ function constructHTMXGetUrl() {
     updatePillSelectionFromURL();
     updateStateAndView();
   });
+
 
 </script>
