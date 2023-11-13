@@ -2,16 +2,19 @@
 
 import { Context, Router, send } from "./deps.ts";
 import {
+  checkUserLikes,
   createTuner,
   deleteTuner,
   EmptyTuner,
   FilterOptions,
   getTuner,
   getTuners,
+  removeLike,
   searchTuners,
+  storeLike,
+  Tuner,
   updateLike,
   updateTuner,
-  Tuner
 } from "./service.ts";
 import { userCanEdit } from "./helpers.ts";
 import { jwtAuthMiddleware } from "./authMiddleware.ts";
@@ -21,25 +24,28 @@ async function renderTuners(
   tunersArg?: Tuner[],
   countArg?: number,
 ) {
+  let userLikes = new Set<string>();
+  if (ctx.state.user?.id) {
+    userLikes = await checkUserLikes(ctx.state.user.id);
+  }
   const tuners = tunersArg ?? await getTuners();
-  const count = countArg ?? tuners.length;
+  const count = countArg ?? tuners.length;  
   const processedTuners = tuners.map((tuner) => {
-    // Process each tuner, e.g., to add canEdit property
     return {
       ...tuner,
-      canEdit: userCanEdit(tuner, ctx.state.user), // Assuming userCanEdit is a helper function
+      canEdit: userCanEdit(tuner, ctx.state.user),
+      liked: userLikes.has(tuner.id),
     };
   });
   ctx.render("tuners.html", {
     tuners: processedTuners,
     count: count,
-    user: ctx.state.user || { id: null, isAdmin: false } 
+    user: ctx.state.user || { id: null, isAdmin: false },
   });
 }
 
 async function getTunerHandler(ctx: Context) {
   await renderTuners(ctx);
-  
 }
 
 function sanitizeImageLinksForHTML(text: string) {
@@ -79,7 +85,7 @@ async function searchTunersHandler(ctx: Context) {
 
 async function createTunerHandler(ctx: Context) {
   if (!ctx.state.user || !ctx.state.user.id) {
-    ctx.response.status = 401; 
+    ctx.response.status = 401;
     ctx.response.body = "Unauthorized: No user information available.";
     return;
   }
@@ -110,14 +116,13 @@ async function deleteTunerHandler(ctx: Context) {
   if (!userCanEdit(tuner, ctx.state.user)) {
     ctx.response.status = 403; // Forbidden
     ctx.response.body = "You are not authorized to delete this tuner";
-    return; 
+    return;
   }
-  
-  await deleteTuner(id);
-  await renderTuners(ctx); 
-  // ctx.response.redirect("/tuners"); 
-}
 
+  await deleteTuner(id);
+  await renderTuners(ctx);
+  // ctx.response.redirect("/tuners");
+}
 
 async function tunerFormHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -256,6 +261,22 @@ async function updateLikeHandler(ctx: Context) {
     ctx.response.status = 404;
     ctx.response.body = "Tuner not found";
   }
+
+  if (ctx.state.user?.id) {
+    try {
+      if (liked) {
+        await storeLike(ctx.state.user.id, id); // Store the user's like
+      } else {
+        await removeLike(ctx.state.user.id, id); // Remove the user's like
+      }
+    } catch (error) {
+      // Handle errors, e.g. log them or send a response indicating failure
+      console.error("Error updating personal like:", error);
+      ctx.response.status = 500;
+      ctx.response.body = "Internal server error when updating like";
+      return;
+    }
+  }
 }
 
 export default new Router()
@@ -270,7 +291,7 @@ export default new Router()
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", jwtAuthMiddleware, createTunerHandler)
   .post("/form/url", validateUrlHandler)
-  .post("/tuners/like/:id", updateLikeHandler)
+  .post("/tuners/like/:id", jwtAuthMiddleware, updateLikeHandler)
   .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler);

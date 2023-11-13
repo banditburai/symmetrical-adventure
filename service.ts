@@ -87,6 +87,57 @@ export async function getTuners(): Promise<Tuner[]> {
   return tuners;
 }
 
+
+// Assuming `likes` table structure: { userId: string, tunerId: string }
+export async function checkUserLikes(userId: string): Promise<Set<string>> {
+  // Fetch all likes for the user and return a set of tuner IDs
+  const likes = await fetchLikesForUser(userId);
+  return new Set(likes);
+}
+
+export async function fetchLikesForUser(userId: string): Promise<string[]> {
+  try {
+    const result = await kv.get(["user_likes", userId]);
+    if (result?.value) {
+      const data = JSON.parse(result.value as string);
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        console.error(`Expected array for user likes, received:`, data);
+        // Handle unexpected data format here, e.g., log it, alert an admin, etc.
+      }
+    }
+  } catch (error) {
+    console.error(`Error fetching likes for user ${userId}:`, error);
+    // Handle JSON parsing error or other fetch issues
+  }
+  return []; // Return an empty array as the default case
+}
+
+
+export async function storeLike(userId: string, tunerId: string): Promise<void> {
+  const likesData = await kv.get(["user_likes", userId]);
+  const likesSet = new Set(likesData?.value ? JSON.parse(likesData.value as string) as string[] : []);
+
+  // Add the like only if it's not already present
+  likesSet.add(tunerId);
+
+  // Convert the Set back to an array for storage
+  await kv.set(["user_likes", userId], JSON.stringify([...likesSet]));
+}
+
+export async function removeLike(userId: string, tunerId: string): Promise<void> {
+  const likesData = await kv.get(["user_likes", userId]);
+  const likesSet = new Set(likesData?.value ? JSON.parse(likesData.value as string) as string[] : []);
+
+  // Remove the like if it exists
+  likesSet.delete(tunerId);
+
+  // Store the potentially updated set back to the KV store
+  await kv.set(["user_likes", userId], JSON.stringify([...likesSet]));
+}
+
+
 export async function createTuner(tuner: Omit<Tuner, 'id'>): Promise<void> {
   const id = crypto.randomUUID();
   await kv.set(["tuners", id], {...tuner, id, likes: 0});
