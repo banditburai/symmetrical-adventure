@@ -27,12 +27,11 @@ body {
 }
 
 #auth-links, #add-button {
-  display: flex;
+  /* display: flex; */
   margin-right: 10px;  
 } 
 
-.header-row{
-  display: flex;
+.header-row{  
   display: flex;
   flex-direction: column;
   justify-content: space-between;

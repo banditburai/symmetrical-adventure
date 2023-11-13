@@ -20,102 +20,116 @@
 
     <div class="header-row">
       <div class="top-nav">
-        <button id="add-button" class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
-        <div id="auth-links">          
+        <button id="add-button" style="display: none" class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
+        <div id="auth-links">
+
           <button id="sign-in-button" class="btn primary" onclick="Clerk.openSignIn()">Sign In</button>
-        </div>        
-        <div id="user-button"></div>
-        
-      </div>
-      </div>
-      <div class="header">
-
-        <h1><span>🐟Tuners</span></h1>
-        <div class="search-section" hx-search-filter>
-          <input type="search" id="search-input" placeholder="Search..." name="key"
-            hx-trigger="keyup changed delay:500ms" hx-target="#main-view">
-
-          <div class="pills">
-            <button class="pill" id="show-all" hx-target="#main-view">All</button>
-            <button class="pill" hx-vals='{"size": "16"}' hx-target="#main-view">16</button>
-            <button class="pill" hx-vals='{"size": "32"}' hx-target="#main-view">32</button>
-            <button class="pill" hx-vals='{"size": "64"}' hx-target="#main-view">64</button>
-            <button class="pill" hx-vals='{"size": "128"}' hx-target="#main-view">128</button>
-            <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
-            <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
-            <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>
-          </div>
         </div>
+        <div id="user-button"></div>
 
-      </div>
-      <div class="content">
-        <aside>
-          <img src="fish.png" />
-        </aside>
-
-        <main>
-
-          <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
-            kx-on:htmx:timeout="alert('Failed to fetch tuners')">
-            <div id="main-view"></div>
-          </div>
-        </main>
       </div>
     </div>
+    <div class="header">
+
+      <h1><span>🐟Tuners</span></h1>
+      <div class="search-section" hx-search-filter>
+        <input type="search" id="search-input" placeholder="Search..." name="key" hx-trigger="keyup changed delay:500ms"
+          hx-target="#main-view">
+
+        <div class="pills">
+          <button class="pill" id="show-all" hx-target="#main-view">All</button>
+          <button class="pill" hx-vals='{"size": "16"}' hx-target="#main-view">16</button>
+          <button class="pill" hx-vals='{"size": "32"}' hx-target="#main-view">32</button>
+          <button class="pill" hx-vals='{"size": "64"}' hx-target="#main-view">64</button>
+          <button class="pill" hx-vals='{"size": "128"}' hx-target="#main-view">128</button>
+          <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
+          <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
+          <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="content">
+      <aside>
+        <img src="fish.png" />
+      </aside>
+
+      <main>
+
+        <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
+          hx-on:htmx:timeout="alert('Failed to fetch tuners')">
+          <div id="main-view"></div>
+        </div>
+      </main>
+    </div>
+  </div>
 
 
- <script>  
-const publishableKey = "pk_test_aGFuZHktbWFydGVuLTM4LmNsZXJrLmFjY291bnRzLmRldiQ"; 
-const frontendApi = 'https://exact-insect-0.clerk.accounts.dev';
-const version = '4.65.0';
+  <script>
+    const publishableKey = "pk_test_aGFuZHktbWFydGVuLTM4LmNsZXJrLmFjY291bnRzLmRldiQ";
+    const frontendApi = 'https://exact-insect-0.clerk.accounts.dev';
+    const version = '4.65.0';
 
-const startClerk = async () => {
-  const Clerk = window.Clerk;
+    const startClerk = async () => {
+      const Clerk = window.Clerk;
 
-  try {
-    
-    await Clerk.load();
-    console.log("see here");
-    const userButton = document.getElementById("user-button");
-    const authLinks = document.getElementById("auth-links");
+      try {
 
-    Clerk.addListener(({ user }) => {
+        await Clerk.load();
+  
+        const userButton = document.getElementById("user-button");
+        const authLinks = document.getElementById("auth-links");
+        const addButton = document.getElementById("add-button");        
+        Clerk.addListener(({ user }) => {
+         
+          authLinks.style.display = user ? "none" : "block";
+          addButton.style.display = user ? "block" : "none";
+         
+
+        });
+
+        if (Clerk.user) {
+          Clerk.mountUserButton(userButton, {
+            afterSignOutUrl: "/"
+          });
+        addButton.style.display = "block";
+
+         // const tuners = document.querySelectorAll('.tuner-entry');
+          // tuners.forEach(tuner => {
+
+          //   const isAuthor = tuner.getAttribute('data-author-id') === user.id;
+          //   const canEdit = isAuthor || user.privateMetadata.isAdmin;
+          //   tuner.querySelector('.edit').style.display = canEdit ? 'block' : 'none';
+          //   tuner.querySelector('.remove').style.display = canEdit ? 'block' : 'none';
+          // });
+        }
       
-      authLinks.style.display = user ? "none" : "block";
-    });
-
-    if (Clerk.user) {
-      // Mount user button component
-      Clerk.mountUserButton(userButton, {        
-        afterSignOutUrl: "/"
-    });
-     
-     
-    }
 
     
   } catch (err) {
-    console.error("Error starting Clerk: ", err);
-  }
+      console.error("Error starting Clerk: ", err);
+    }
 };
 
-(() => {
-  const script = document.createElement("script");
-  script.setAttribute("data-clerk-publishable-key", publishableKey);
-  script.async = true;
-  script.src = `https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
-  script.crossOrigin = "anonymous";
-  script.addEventListener("load", startClerk);
-  script.addEventListener("error", () => {
-    document.getElementById("no-frontend-api-warning").hidden = false;
-  });
-  document.body.appendChild(script);
-})();
-</script>
+    (() => {
+      const script = document.createElement("script");
+      script.setAttribute("data-clerk-publishable-key", publishableKey);
+      script.async = true;
+      script.src = `https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
+      script.crossOrigin = "anonymous";
+      script.addEventListener("load", startClerk);
+      script.addEventListener("error", () => {
+        document.getElementById("no-frontend-api-warning").hidden = false;
+      });
+      document.body.appendChild(script);
+    })();
+  </script>
 
 </body>
 
-<footer class="" social-footer>
+
+
+<footer class="social-footer">
   <div class="social-media-links">
     <a href="https://discord.com/channels/@me/606590420713078788" target="_blank">
       <svg width="22px" height="22px" viewBox="0 -28.5 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg"
@@ -125,7 +139,7 @@ const startClerk = async () => {
           fill="#5865F2" fill-rule="nonzero">
 
         </path>
-        </svg>
+      </svg>
     </a>
     <a href="https://twitter.com/promptsiren" target="_blank">
       <svg viewBox="328 355 335 276" xmlns="http://www.w3.org/2000/svg">
@@ -320,6 +334,5 @@ const startClerk = async () => {
     updatePillSelectionFromURL();
     updateStateAndView();
   });
-
 
 </script>

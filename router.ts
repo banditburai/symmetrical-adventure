@@ -1,6 +1,6 @@
 //router.ts
 
-import { Context, Router, send } from "./deps.ts";
+import { Context, Router, send} from "./deps.ts";
 import {
   createTuner,
   deleteTuner,
@@ -14,9 +14,13 @@ import {
   updateTuner,
 } from "./service.ts";
 
-async function getTunerHandler(ctx: Context) {
+import { jwtAuthMiddleware } from "./authMiddleware.ts";
+
+
+
+async function getTunerHandler(ctx: Context) {    
   ctx.render("tuners.html", {
-    tuners: await getTuners(),
+    tuners: await getTuners(),    
   });
 }
 
@@ -66,14 +70,21 @@ async function searchTunersHandler(ctx: Context) {
 }
 
 async function createTunerHandler(ctx: Context) {
+  if (!ctx.state.user || !ctx.state.user.id) {
+    ctx.response.status = 401; // or appropriate error code
+    ctx.response.body = "Unauthorized: No user information available.";
+    return;
+  }
+
   const bodyResult = ctx.request.body({ type: "form-data" });
   const body = await bodyResult.value.read();
   let { id, prompt, url, size, comments } = body.fields;
+  const authorId = ctx.state.user.id;
   prompt = prompt || "No prompt provided";
   if (id) {
-    await updateTuner({ id, prompt, url, size, comments });
+    await updateTuner({ id, authorId, prompt, url, size, comments });
   } else {
-    await createTuner({ prompt, url, size, comments, likes: 0 });
+    await createTuner({ prompt, authorId, url, size, comments, likes: 0 });
   }
 
   ctx.render("tuners.html", {
@@ -234,13 +245,14 @@ export default new Router()
   .get("/main.css", cssHandler)
   .get("/fish.png", imgHandler)
   .get("/three-dots.svg", imgHandler)
+  .get("/plus-sign.svg", imgHandler)
   .get("/search", searchTunersHandler)
   .get("/tuners", getTunerHandler)
-  .get("/tuners/form/:id?", tunerFormHandler)
+  .get("/tuners/form/:id?", jwtAuthMiddleware, tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
-  .post("/tuners", createTunerHandler)
+  .post("/tuners", jwtAuthMiddleware, createTunerHandler)
   .post("/form/url", validateUrlHandler)
   .post("/tuners/like/:id", updateLikeHandler)
-  .delete("/tuners/:id", deleteTunerHandler)
+  .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler);

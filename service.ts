@@ -4,6 +4,7 @@ const kv = await Deno.openKv();
 
 export type Tuner = {
   id: string;
+  authorId: string;
   prompt: string;
   url: string;
   size: string;
@@ -17,8 +18,10 @@ export type Pill = {
   selected: boolean;  
 };
 
+
 export const EmptyTuner: Tuner = {
   id: "",
+  authorId: "",
   prompt: "",
   url: "",
   size: "16",
