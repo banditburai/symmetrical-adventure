@@ -1,7 +1,6 @@
 <form hx-post="/tuners" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data">
 
   <input type="hidden" name="id" value="<%= it.id %>" />
-  <input type="hidden" name="authorId" value="<%= ctx.state.userId %>" />
   <textarea name="prompt" placeholder="Prompt"><%= it.prompt %></textarea>
   <div hx-target="this" hx-swap="outerHTML">
     <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
@@ -25,7 +24,6 @@
   </div>
 
   <textarea name="comments" placeholder="Comments"><%= it.comments %></textarea>
-
   <footer class="form-footer">
     <button class="btn secondary" hx-get="/tuners">Cancel</button>
     <div id="submit-button-container">

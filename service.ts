@@ -18,6 +18,10 @@ export type Pill = {
   selected: boolean;  
 };
 
+export interface User{
+  id: string;
+  isAdmin?: boolean;
+}
 
 export const EmptyTuner: Tuner = {
   id: "",

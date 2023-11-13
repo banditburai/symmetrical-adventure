@@ -76,3 +76,39 @@ export async function verifyClerkSession(sessionToken: string) {
   console.log(sessionDetails);
   return sessionDetails; // Return the verified session details
 }
+
+
+
+export async function fetchUserDetails(userId: string) {
+  const userDetailsUrl = `${API_URL}/users/${userId}`;
+
+  try {
+    const response = await fetch(userDetailsUrl, {
+      method: 'GET', // Use GET to fetch user details
+      headers: {
+        'Authorization': `Bearer ${CLERK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      // Error handling based on the status code
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch user details: ${errorText}`);
+    }
+
+    const userDetails = await response.json();
+console.log(userDetails);
+    // Perform your logic here to extract the isAdmin flag from the private metadata
+    // Be sure to understand the structure of the response to navigate to the isAdmin property correctly
+    const isAdmin = userDetails.private_metadata && userDetails.private_metadata.isAdmin;
+    
+    return {
+      id: userDetails.id,
+      isAdmin: !!isAdmin, // Coerce undefined to false if not set
+    };
+  } catch (error) {
+    console.error('Failed to fetch user details:', error);
+    throw error;
+  }
+}

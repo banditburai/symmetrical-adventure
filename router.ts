@@ -1,6 +1,6 @@
 //router.ts
 
-import { Context, Router, send} from "./deps.ts";
+import { Context, Router, send } from "./deps.ts";
 import {
   createTuner,
   deleteTuner,
@@ -16,26 +16,24 @@ import {
 
 import { jwtAuthMiddleware } from "./authMiddleware.ts";
 
-
-
-async function getTunerHandler(ctx: Context) {    
+async function getTunerHandler(ctx: Context) {
   ctx.render("tuners.html", {
-    tuners: await getTuners(),    
+    tuners: await getTuners(),
   });
 }
 
 function sanitizeImageLinksForHTML(text: string) {
-    const imageUrlRegex = /https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/gi;
-    const mjRunUrlRegex = /https:\/\/s\.mj\.run\/\S+/gi;
-    
-    // Replace image URLs with [IMG]
-    text = text.replace(imageUrlRegex, '[IMG]');
-    
-    // Replace s.mj.run URLs with [IMG]
-    text = text.replace(mjRunUrlRegex, '[IMG]');
-    
-    return text;
-  }
+  const imageUrlRegex = /https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/gi;
+  const mjRunUrlRegex = /https:\/\/s\.mj\.run\/\S+/gi;
+
+  // Replace image URLs with [IMG]
+  text = text.replace(imageUrlRegex, "[IMG]");
+
+  // Replace s.mj.run URLs with [IMG]
+  text = text.replace(mjRunUrlRegex, "[IMG]");
+
+  return text;
+}
 
 async function searchTunersHandler(ctx: Context) {
   const searchParams = ctx.request.url.searchParams;
@@ -75,7 +73,6 @@ async function createTunerHandler(ctx: Context) {
     ctx.response.body = "Unauthorized: No user information available.";
     return;
   }
-
   const bodyResult = ctx.request.body({ type: "form-data" });
   const body = await bodyResult.value.read();
   let { id, prompt, url, size, comments } = body.fields;
@@ -95,10 +92,25 @@ async function createTunerHandler(ctx: Context) {
 
 async function deleteTunerHandler(ctx: Context) {
   const { id } = ctx.params;
-  await deleteTuner(id);
-  ctx.render("tuners.html", {
-    tuners: await getTuners(),
-  });
+  const tuner = await getTuner(id);
+  // Check if the user is the author or an admin
+  if ( 
+    tuner && (ctx.state.user.id !==tuner.authorId && !ctx.state.user.isAdmin)
+  ) {
+    ctx.response.status = 403; // Forbidden
+    ctx.response.body = "You are not authorized to delete this tuner";
+    return;
+  }
+  if (tuner) {
+    await deleteTuner(id);
+    ctx.render("tuners.html", {
+      tuners: await getTuners(),
+    });
+    ctx.response.redirect("/tuners");
+  } else {
+    ctx.response.status = 404; // Not Found
+    ctx.response.body = "Tuner not found";
+  }
 }
 
 async function tunerFormHandler(ctx: Context) {
