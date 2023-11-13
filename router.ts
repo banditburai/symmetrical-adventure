@@ -23,7 +23,6 @@ async function renderTuners(
 ) {
   const tuners = tunersArg ?? await getTuners();
   const count = countArg ?? tuners.length;
-console.log(ctx.state.user);
   const processedTuners = tuners.map((tuner) => {
     // Process each tuner, e.g., to add canEdit property
     return {
@@ -31,11 +30,10 @@ console.log(ctx.state.user);
       canEdit: userCanEdit(tuner, ctx.state.user), // Assuming userCanEdit is a helper function
     };
   });
-console.log(processedTuners);
   ctx.render("tuners.html", {
     tuners: processedTuners,
     count: count,
-    user: ctx.state.user
+    user: ctx.state.user || { id: null, isAdmin: false } 
   });
 }
 
@@ -266,7 +264,7 @@ export default new Router()
   .get("/fish.png", imgHandler)
   .get("/three-dots.svg", imgHandler)
   .get("/plus-sign.svg", imgHandler)
-  .get("/search", searchTunersHandler)
+  .get("/search", jwtAuthMiddleware, searchTunersHandler)
   .get("/tuners", getTunerHandler)
   .get("/tuners/form/:id?", jwtAuthMiddleware, tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
