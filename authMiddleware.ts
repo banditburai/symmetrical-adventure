@@ -17,11 +17,12 @@ export async function jwtAuthMiddleware(
   try {
     const publicKey = await getPublicKey();
     const payload = await verify(sessionToken, publicKey);
+    console.log(payload);
     let userDetails;
     if (payload && payload.sub){
         userDetails = await fetchUserDetails(payload.sub); 
     } 
-    ctx.state.user = { id: payload.sub, ...userDetails }; 
+    ctx.state.user = { ...ctx.state.user, ...userDetails }; 
     await next(); // Proceed with the next middleware/route handler only after all checks are done
   } catch (error) {
     // If there's an error, determine its nature and respond appropriately

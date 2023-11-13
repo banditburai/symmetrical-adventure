@@ -32,7 +32,7 @@ export async function fetchClerkJWK(): Promise<CryptoKey> {
     );
   }
   
-// Fetch and store the public key upon the first import of this module.
+  // Fetch and store the public key upon the first import of this module.
 // This will only run once per application lifecycle.
 let _publicKey: CryptoKey | undefined;
 
@@ -42,7 +42,6 @@ export async function getPublicKey(): Promise<CryptoKey> {
   }
   return _publicKey;
 }
-
 
 // This function verifies the session by making a POST request to Clerk's verify endpoint
 export async function verifyClerkSession(sessionToken: string) {
@@ -77,38 +76,76 @@ export async function verifyClerkSession(sessionToken: string) {
   return sessionDetails; // Return the verified session details
 }
 
+// export async function fetchUserDetails(userId: string) {
+//   const userDetailsUrl = `${API_URL}/users/${userId}`;
 
+//   try {
+//     const response = await fetch(userDetailsUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Authorization': `Bearer ${CLERK_API_KEY}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     if (!response.ok) {
+      
+//       const errorText = await response.text();
+//       throw new Error(`Failed to fetch user details: ${errorText}`);
+//     }
+
+//     const userDetails = await response.json();
+// console.log(userDetails);
+    
+//     const isAdmin = userDetails.private_metadata && userDetails.private_metadata.isAdmin;
+    
+//     return {
+//       id: userDetails.id,
+//       isAdmin: !!isAdmin, 
+//     };
+//   } catch (error) {
+//     console.error('Failed to fetch user details:', error);
+//     throw error;
+//   }
+// }
 
 export async function fetchUserDetails(userId: string) {
   const userDetailsUrl = `${API_URL}/users/${userId}`;
 
+  const response = await safeFetch(userDetailsUrl, {
+    'Authorization': `Bearer ${CLERK_API_KEY}`,
+    'Content-Type': 'application/json',
+  });
+
+  if (!response) {
+    throw new Error('User details could not be fetched due to an error.');
+  }
+
+  const userDetails = await response.json();
+  const isAdmin = Boolean(userDetails.private_metadata?.isAdmin);
+  
+  return {
+    id: userDetails.id,
+    isAdmin: isAdmin,
+  };
+}
+
+
+async function safeFetch(url: string, headers: Record<string, string>) {
   try {
-    const response = await fetch(userDetailsUrl, {
-      method: 'GET', // Use GET to fetch user details
-      headers: {
-        'Authorization': `Bearer ${CLERK_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers,
     });
 
     if (!response.ok) {
-      // Error handling based on the status code
       const errorText = await response.text();
-      throw new Error(`Failed to fetch user details: ${errorText}`);
+      console.error(`Failed to fetch data: ${errorText}`);
+      return null; 
     }
-
-    const userDetails = await response.json();
-console.log(userDetails);
-    // Perform your logic here to extract the isAdmin flag from the private metadata
-    // Be sure to understand the structure of the response to navigate to the isAdmin property correctly
-    const isAdmin = userDetails.private_metadata && userDetails.private_metadata.isAdmin;
-    
-    return {
-      id: userDetails.id,
-      isAdmin: !!isAdmin, // Coerce undefined to false if not set
-    };
+    return response; 
   } catch (error) {
-    console.error('Failed to fetch user details:', error);
-    throw error;
+    console.error('Network or other fetch-related error occurred:', error);
+    return null; 
   }
 }

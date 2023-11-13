@@ -8,18 +8,40 @@ import {
   FilterOptions,
   getTuner,
   getTuners,
-  pills,
   searchTuners,
   updateLike,
   updateTuner,
+  Tuner
 } from "./service.ts";
-
+import { userCanEdit } from "./helpers.ts";
 import { jwtAuthMiddleware } from "./authMiddleware.ts";
 
-async function getTunerHandler(ctx: Context) {
-  ctx.render("tuners.html", {
-    tuners: await getTuners(),
+async function renderTuners(
+  ctx: Context,
+  tunersArg?: Tuner[],
+  countArg?: number,
+) {
+  const tuners = tunersArg ?? await getTuners();
+  const count = countArg ?? tuners.length;
+console.log(ctx.state.user);
+  const processedTuners = tuners.map((tuner) => {
+    // Process each tuner, e.g., to add canEdit property
+    return {
+      ...tuner,
+      canEdit: userCanEdit(tuner, ctx.state.user), // Assuming userCanEdit is a helper function
+    };
   });
+console.log(processedTuners);
+  ctx.render("tuners.html", {
+    tuners: processedTuners,
+    count: count,
+    user: ctx.state.user
+  });
+}
+
+async function getTunerHandler(ctx: Context) {
+  await renderTuners(ctx);
+  
 }
 
 function sanitizeImageLinksForHTML(text: string) {
@@ -53,23 +75,13 @@ async function searchTunersHandler(ctx: Context) {
     };
   });
 
-  const updatedPills = pills.map((pill) => ({
-    ...pill,
-    selected: pill.param === "size"
-      ? pill.value === filterOptions.size
-      : pill.param === "raw"
-      ? filterOptions.raw
-      : pill.param === "imgprompt" && filterOptions.imgprompt,
-  }));
-  const isHtmx = ctx.request.headers.get("HX-Request");
-
-  const template = isHtmx ? "tuners.html" : "tuners.html";
-  ctx.render(template, { tuners, count, pills: updatedPills });
+  console.log("Tuner Data:", tuners);
+  await renderTuners(ctx, tuners, count);
 }
 
 async function createTunerHandler(ctx: Context) {
   if (!ctx.state.user || !ctx.state.user.id) {
-    ctx.response.status = 401; // or appropriate error code
+    ctx.response.status = 401; 
     ctx.response.body = "Unauthorized: No user information available.";
     return;
   }
@@ -84,34 +96,30 @@ async function createTunerHandler(ctx: Context) {
     await createTuner({ prompt, authorId, url, size, comments, likes: 0 });
   }
 
-  ctx.render("tuners.html", {
-    tuners: await getTuners(),
-  });
+  await renderTuners(ctx);
   ctx.response.redirect("/tuners");
 }
 
 async function deleteTunerHandler(ctx: Context) {
   const { id } = ctx.params;
-  const tuner = await getTuner(id);
-  // Check if the user is the author or an admin
-  if ( 
-    tuner && (ctx.state.user.id !==tuner.authorId && !ctx.state.user.isAdmin)
-  ) {
-    ctx.response.status = 403; // Forbidden
-    ctx.response.body = "You are not authorized to delete this tuner";
-    return;
-  }
-  if (tuner) {
-    await deleteTuner(id);
-    ctx.render("tuners.html", {
-      tuners: await getTuners(),
-    });
-    ctx.response.redirect("/tuners");
-  } else {
+  const tuner = await getTuner(id); // Attempt to fetch the tuner by ID
+  if (!tuner) {
     ctx.response.status = 404; // Not Found
     ctx.response.body = "Tuner not found";
+    return; // Exit if the tuner does not exist
   }
+  // Use userCanEdit to check if the user has permission to delete the tuner
+  if (!userCanEdit(tuner, ctx.state.user)) {
+    ctx.response.status = 403; // Forbidden
+    ctx.response.body = "You are not authorized to delete this tuner";
+    return; 
+  }
+  
+  await deleteTuner(id);
+  await renderTuners(ctx); 
+  // ctx.response.redirect("/tuners"); 
 }
+
 
 async function tunerFormHandler(ctx: Context) {
   const { id } = ctx.params;
