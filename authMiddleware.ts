@@ -1,7 +1,25 @@
-import { getPublicKey, fetchUserDetails } from "./clerkUtils.ts";
+import { fetchUserDetails, getPublicKey } from "./clerkUtils.ts";
 import { verify } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
 import { Context } from "./deps.ts";
+import { recordUserLike } from "./service.ts";
+import { User } from "./service.ts";
 
+async function verifyJWTAndGetUserDetails(
+  sessionToken: string,
+): Promise<User | null> {
+  try {
+    const publicKey = await getPublicKey();
+    const payload = await verify(sessionToken, publicKey);
+    if (payload && payload.sub) {
+      const userDetails = await fetchUserDetails(payload.sub);
+      return userDetails;
+    }
+    return null;
+  } catch (error) {
+    console.error("JWT Verification Error:", error);
+    return null;
+  }
+}
 
 export async function jwtAuthMiddleware(
   ctx: Context,
@@ -17,12 +35,11 @@ export async function jwtAuthMiddleware(
   try {
     const publicKey = await getPublicKey();
     const payload = await verify(sessionToken, publicKey);
-    console.log(payload);
     let userDetails;
-    if (payload && payload.sub){
-        userDetails = await fetchUserDetails(payload.sub); 
-    } 
-    ctx.state.user = { ...ctx.state.user, ...userDetails }; 
+    if (payload && payload.sub) {
+      userDetails = await fetchUserDetails(payload.sub);
+    }
+    ctx.state.user = { ...ctx.state.user, ...userDetails };
     await next(); // Proceed with the next middleware/route handler only after all checks are done
   } catch (error) {
     // If there's an error, determine its nature and respond appropriately
@@ -32,8 +49,28 @@ export async function jwtAuthMiddleware(
       ctx.response.body = { message: "Invalid session token" };
     } else {
       ctx.response.status = 500;
-      ctx.response.body = 'Error processing authentication';
+      ctx.response.body = "Error processing authentication";
     }
   }
 }
- 
+
+
+export async function userLikeMiddleware(
+  ctx: Context,
+  tunerId: string,
+  liked: boolean,
+) {
+  const sessionToken = await ctx.cookies.get("__session");
+  if (sessionToken) {
+    const userDetails = await verifyJWTAndGetUserDetails(sessionToken);
+    if (userDetails) {
+      // Perform actions as an authenticated user
+      try {
+        await recordUserLike(userDetails.id, tunerId, liked);
+      } catch (error) {
+        console.error("Error in userLikeMiddleware:", error);
+        throw new Error("Internal server error when updating like");
+      }
+    }
+  }
+}

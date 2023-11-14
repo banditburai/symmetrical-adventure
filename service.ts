@@ -20,8 +20,17 @@ export type Pill = {
 
 export interface User{
   id: string;
+  username: string;  
+  pfp: string;
   isAdmin?: boolean;
 }
+
+export const currentUser: User = {
+  id: 'user-id',
+  username: 'default-user',  
+  pfp: 'http://example.com/path-to-profile-picture.png',
+  isAdmin: false,
+};
 
 export const EmptyTuner: Tuner = {
   id: "",
@@ -38,7 +47,7 @@ export type FilterOptions = {
   size?: string;
   raw?: boolean;
   imgprompt?: boolean;
- 
+  likedbyme?: boolean;
 };
 
 export const pills: Pill[] = [
@@ -49,16 +58,22 @@ export const pills: Pill[] = [
   { param: 'size', value: 'nonstandard', selected: false },
   { param: 'raw', value: 'true', selected: false },
   { param: 'imgprompt', value: 'true', selected: false },
+  { param: 'likedbyme', value: 'true', selected: false },
 ];
 
-export async function searchTuners(options: FilterOptions): Promise<{tuners: Tuner[], count: number}> {
-  const tuners = await getTuners();
+export async function searchTuners(options: FilterOptions, userId?: string): Promise<{tuners: Tuner[], count: number}> {
+  let tuners = await getTuners();
+if (options.likedbyme && userId){
+  const userLikes = await checkUserLikes(userId);
+  tuners =tuners.filter( tuner => userLikes.has(tuner.id));
+}
+
   const filteredTuners = tuners.filter(tuner => {
     let matches = true;
-    if (options.key) matches = matches && tuner.prompt.indexOf(options.key) > -1;
-    if (options.size) matches = matches && tuner.size === options.size;
-    if (options.raw) matches = matches && /--style raw/.test(tuner.prompt);
-    if (options.imgprompt) matches = matches && /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(tuner.prompt);    
+    if (options.key) matches &&= tuner.prompt.indexOf(options.key) > -1;
+    if (options.size) matches &&= tuner.size === options.size;
+    if (options.raw) matches &&= /--style raw/.test(tuner.prompt);
+    if (options.imgprompt) matches &&= /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(tuner.prompt);
     return matches;
   });
 
@@ -69,6 +84,12 @@ export async function getNumberOfEntries(): Promise<number> {
   const tuners = await getTuners();
   return tuners.length;
 }
+
+export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
+  const tuners = await getTuners(); 
+  return tuners.find(tuner => tuner.url === url); // Return the tuner if found, undefined otherwise
+}
+
 export async function getTuner(id: string): Promise<Tuner | undefined> {
   const entry = await kv.get(["tuners", id]);
   return entry ? entry.value as Tuner : undefined; // Safe type assertion with a fallback to undefined.
@@ -88,9 +109,7 @@ export async function getTuners(): Promise<Tuner[]> {
 }
 
 
-// Assuming `likes` table structure: { userId: string, tunerId: string }
 export async function checkUserLikes(userId: string): Promise<Set<string>> {
-  // Fetch all likes for the user and return a set of tuner IDs
   const likes = await fetchLikesForUser(userId);
   return new Set(likes);
 }
@@ -114,12 +133,17 @@ export async function fetchLikesForUser(userId: string): Promise<string[]> {
   return []; // Return an empty array as the default case
 }
 
+export async function recordUserLike(userId: string, tunerId: string, liked: boolean) {
+  if (liked) {
+    await storeLike(userId, tunerId);
+  } else {
+    await removeLike(userId, tunerId);
+  }
+}
 
 export async function storeLike(userId: string, tunerId: string): Promise<void> {
   const likesData = await kv.get(["user_likes", userId]);
   const likesSet = new Set(likesData?.value ? JSON.parse(likesData.value as string) as string[] : []);
-
-  // Add the like only if it's not already present
   likesSet.add(tunerId);
 
   // Convert the Set back to an array for storage

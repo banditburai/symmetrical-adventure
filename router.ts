@@ -9,15 +9,14 @@ import {
   FilterOptions,
   getTuner,
   getTuners,
-  removeLike,
   searchTuners,
-  storeLike,
   Tuner,
   updateLike,
   updateTuner,
+  findTunerByUrl,
 } from "./service.ts";
 import { userCanEdit } from "./helpers.ts";
-import { jwtAuthMiddleware } from "./authMiddleware.ts";
+import { jwtAuthMiddleware, userLikeMiddleware } from "./authMiddleware.ts";
 
 async function renderTuners(
   ctx: Context,
@@ -29,7 +28,8 @@ async function renderTuners(
     userLikes = await checkUserLikes(ctx.state.user.id);
   }
   const tuners = tunersArg ?? await getTuners();
-  const count = countArg ?? tuners.length;  
+  const count = countArg ?? tuners.length;
+  tuners.sort((a, b) => b.likes - a.likes || Math.random() - 0.5);
   const processedTuners = tuners.map((tuner) => {
     return {
       ...tuner,
@@ -42,6 +42,12 @@ async function renderTuners(
     count: count,
     user: ctx.state.user || { id: null, isAdmin: false },
   });
+}
+
+function isValidUrl(url: string) {
+  const standardUrlPattern = /^https:\/\/tuner\.midjourney\.com\/[A-Za-z0-9]{7}(?:\?answer=[A-Za-z0-9]+)?$/;
+  const codeUrlPattern = /^https:\/\/tuner\.midjourney\.com\/code\/[A-Za-z0-9]+$/;
+  return standardUrlPattern.test(url) || codeUrlPattern.test(url);
 }
 
 async function getTunerHandler(ctx: Context) {
@@ -68,9 +74,13 @@ async function searchTunersHandler(ctx: Context) {
     size: searchParams.get("size") ?? undefined,
     raw: searchParams.get("raw") === "true" ? true : undefined,
     imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
+    likedbyme: searchParams.get("likedbyme") === "true" ? true : undefined,
   };
-
-  let { tuners, count } = await searchTuners(filterOptions);
+  let userId;
+  if (filterOptions.likedbyme) {
+    userId = ctx.state.user?.id;
+  }
+  let { tuners, count } = await searchTuners(filterOptions, userId);
   tuners = tuners.map((tuner) => {
     const sanitizedPrompt = sanitizeImageLinksForHTML(tuner.prompt);
     return {
@@ -79,7 +89,6 @@ async function searchTunersHandler(ctx: Context) {
     };
   });
 
-  console.log("Tuner Data:", tuners);
   await renderTuners(ctx, tuners, count);
 }
 
@@ -145,69 +154,49 @@ async function imgHandler(ctx: Context) {
   });
 }
 
-async function validateUrlHandler(ctx: Context) {
-  try {
-    const bodyResult = ctx.request.body({ type: "form-data" }); // Change to "form-data" for multipart
-    const formDataBody = await bodyResult.value.read(); // This is for "form-data"
-    let urlToValidate = formDataBody.fields.url;
+function setResponse(ctx: Context, isValid: boolean, urlToValidate: string, errorMessage?: string) {
+  const buttonState = isValid ? "" : "disabled";
+  const indicatorVisibility = isValid ? "style='visibility:hidden;'" : "";
+  const errorDisplay = errorMessage ? `<div class='error-message'>${errorMessage}</div>` : "";
 
-    urlToValidate = urlToValidate ? urlToValidate.trim() : "";
-    let isValid = false;
-    let errorMessage = "";
-
-    // Define URL validation patterns
-    const standardUrlPattern =
-      /^https:\/\/tuner\.midjourney\.com\/[A-Za-z0-9]{7}(?:\?answer=[A-Za-z0-9]+)?$/;
-    const codeUrlPattern =
-      /^https:\/\/tuner\.midjourney\.com\/code\/[A-Za-z0-9]+$/;
-
-    // Check if URL is valid
-    if (
-      urlToValidate &&
-      (standardUrlPattern.test(urlToValidate) ||
-        codeUrlPattern.test(urlToValidate))
-    ) {
-      isValid = true;
-    } else {
-      errorMessage = "Invalid URL. Please check and try again.";
-    }
-    const submitButtonDisabledAttribute = isValid ? "" : "disabled";
-    const submitButtonUpdate = `
-    <div id="submit-button-container" hx-swap-oob="true">
-    <button name="form-submit" class="btn primary" ${submitButtonDisabledAttribute}>Save</button>
-  </div>
-`;
-    // Build response based on validation
-    if (isValid) {
-      // For a valid URL
-      ctx.response.body = `
-  <div hx-target="this" class="valid" hx-swap="outerHTML">
-    <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
-    name="url" id="form-url" hx-indicator="#ind"
+  ctx.response.body = `
+    <div hx-target="this" hx-swap="outerHTML" class="${isValid ? "valid" : "error"}">
+      <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
+      name="url" id="form-url" hx-indicator="#ind"
     placeholder="URL" value="${encodeURI(urlToValidate)}"/>
-    <img id="ind" src="/three-dots.svg" class="htmx-indicator" style="visibility:hidden;"/>
-  </div>
-  ${submitButtonUpdate}
-`;
-    } else {
-      // For an invalid URL
-      ctx.response.body = `
-<div hx-target="this" hx-swap="outerHTML" class="error">
-  <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
-   name="url" id="form-url" hx-indicator="#ind"
-  placeholder="URL" value="${urlToValidate}"/>
-  <div class='error-message'>${errorMessage}</div>
-  <img id="url-ind" src="/three-dots.svg" class="htmx-indicator"/>
-</div>
-${submitButtonUpdate}
-`;
-    }
-  } catch (error) {
-    console.error("Error during URL validation:", error);
-    ctx.response.status = 500;
-    ctx.response.body = "Internal server error while validating URL";
-  }
+    ${errorDisplay}
+      <img id="ind" src="/three-dots.svg" class="htmx-indicator" ${indicatorVisibility} />
+    </div>
+    <div id="submit-button-container" hx-swap-oob="true">
+      <button name="form-submit" class="btn primary" ${buttonState}>Save</button>
+    </div>`;
 }
+
+
+  async function validateUrlHandler(ctx: Context) {
+    try {
+      const bodyResult = ctx.request.body({ type: "form-data" });
+      const formDataBody = await bodyResult.value.read();
+      const urlToValidate = formDataBody.fields.url?.trim() || "";
+      if (!isValidUrl(urlToValidate)) {
+        setResponse(ctx, false, urlToValidate, "Invalid URL. Please check and try again.");
+        return;
+      }
+      const existingTuner = await findTunerByUrl(urlToValidate);
+      console.log("Existing tuner check:", existingTuner); 
+  
+      if (existingTuner) {
+        setResponse(ctx, false, urlToValidate, "A tuner with this URL already exists. Here's the existing tuner: " + existingTuner.prompt);
+        return; 
+      }       
+      setResponse(ctx, true, urlToValidate);
+    } catch (error) {
+      console.error("Error during URL validation:", error);
+      ctx.response.status = 500;
+      ctx.response.body = "Internal server error while validating URL";
+    }
+  }
+  
 
 async function removeTruncateClassHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -221,12 +210,7 @@ async function removeTruncateClassHandler(ctx: Context) {
   ctx.response.body = tunerHtml;
 }
 
-async function updateLikeHandler(ctx: Context) {
-  const { id } = ctx.params;
-  const result = ctx.request.body({ type: "form" });
-  const formData = await result.value;
-  const likedParam = formData.get("liked");
-  const liked = likedParam === "true";
+export async function updateGlobalLikes(ctx: Context, id: string, liked: boolean): Promise<void>{
   const tuner = await updateLike(id, liked);
   if (tuner) {
     ctx.response.status = 200;
@@ -241,9 +225,7 @@ async function updateLikeHandler(ctx: Context) {
           hx-swap="outerHTML"          
           hx-trigger="click"
           hx-target="#like-wrapper-${tuner.id}"
-          hx-include="#liked-state-${tuner.id}">
-          
-          
+          hx-include="#liked-state-${tuner.id}">                    
       <svg xmlns="http://www.w3.org/2000/svg" class="icon like-icon ${buttonClass}"
         width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
         stroke-linecap="round" stroke-linejoin="round">
@@ -261,22 +243,20 @@ async function updateLikeHandler(ctx: Context) {
     ctx.response.status = 404;
     ctx.response.body = "Tuner not found";
   }
+}
 
-  if (ctx.state.user?.id) {
-    try {
-      if (liked) {
-        await storeLike(ctx.state.user.id, id); // Store the user's like
-      } else {
-        await removeLike(ctx.state.user.id, id); // Remove the user's like
-      }
-    } catch (error) {
-      // Handle errors, e.g. log them or send a response indicating failure
-      console.error("Error updating personal like:", error);
-      ctx.response.status = 500;
-      ctx.response.body = "Internal server error when updating like";
-      return;
-    }
-  }
+
+async function updateLikeHandler(ctx: Context) {
+  const { id } = ctx.params;
+  const result = ctx.request.body({ type: "form" });
+  const formData = await result.value;
+  const likedParam = formData.get("liked");
+  const liked = likedParam === "true";
+  
+  await updateGlobalLikes(ctx, id, liked);
+
+  await userLikeMiddleware(ctx, id, liked); 
+
 }
 
 export default new Router()
@@ -291,7 +271,7 @@ export default new Router()
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", jwtAuthMiddleware, createTunerHandler)
   .post("/form/url", validateUrlHandler)
-  .post("/tuners/like/:id", jwtAuthMiddleware, updateLikeHandler)
+  .post("/tuners/like/:id", updateLikeHandler)
   .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler);

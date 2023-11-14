@@ -44,7 +44,9 @@
           <button class="pill" hx-vals='{"size": "128"}' hx-target="#main-view">128</button>
           <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
           <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
-          <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>
+          <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>          
+          <button class="pill" id="liked-by-me" hx-vals='{"likedbyme": "true"}' style="display: block" hx-target="#main-view">👍</button>
+          
         </div>
       </div>
 
@@ -79,12 +81,13 @@
   
         const userButton = document.getElementById("user-button");
         const authLinks = document.getElementById("auth-links");
-        const addButton = document.getElementById("add-button");        
+        const addButton = document.getElementById("add-button");
+        const likedbyme = document.getElementById("liked-by-me")        
         Clerk.addListener(({ user }) => {
          
           authLinks.style.display = user ? "none" : "block";
           addButton.style.display = user ? "block" : "none";
-         
+          // likedbyme.style.display = user ? "block" : "none";
 
         });
 
