@@ -7,28 +7,16 @@
       <a href="<%= it.url %>" target="_blank" rel="noopener noreferrer">View Original Tuner</a>
     </div>
     
-    <div class="comments-section">
-      <% if (it.comments && it.comments.length > 0) { %>
-        <% it.comments.forEach(function(comment) { %>
-          <div class="comment">
-            <img src="<%= comment.pfp %>" alt="<%= comment.username %>'s profile picture" class="profile-pic">
-            <div class="comment-content">
-              <strong><%= comment.username %></strong>
-              <p><%= comment.text %></p>
-            </div>
-          </div>
-          <hr>
-        <% }); %>
-      <% } else { %>
-        <p>🙃 Be the first commenter 🚀</p>
-      <% } %>
+
+    <div hx-get="/comments/section/<%= it.id %>" hx-trigger="load" hx-target="#comments-view" hx-swap="innerHTML" id="comments-view">              
+    <div id="comments-view"></div>
     </div>
-  
+
     <label for="new-comment"></label>
     <textarea id="new-comment" name="newComment" placeholder="Add your comment here..." required></textarea>
   
     <footer class="form-footer">
-      <button class="btn secondary" hx-get="/tuners">Cancel</button>
+      <button class="btn secondary" hx-get="/">Cancel</button>
       <div id="comment-submit-button-container">
         <button id="comment-submit" type="submit" name="comment-submit" class="btn primary">Save Comment</button>
       </div>

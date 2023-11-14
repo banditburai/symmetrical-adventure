@@ -88,15 +88,15 @@ if (options.likedbyme && userId){
   return { tuners: filteredTuners, count: filteredTuners.length };
 }
 
-export async function addComment(tunerId: string, comment: Comment): Promise<void> {
+export async function addComment(tunerId: string, comment: Comment): Promise<Tuner> {
   comment.commentId = crypto.randomUUID();
   const tuner = await getTuner(tunerId);
   if (!tuner) {
     throw new Error(`Tuner with id ${tunerId} not found.`);
   }
-  
-  tuner.comments.push(comment); // Add the new comment
-  await kv.set(["tuners", tunerId], tuner); // Save the updated tuner
+  tuner.comments.push(comment); 
+  await kv.set(["tuners", tunerId], tuner); 
+  return tuner; 
 }
 
 

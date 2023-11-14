@@ -42,7 +42,6 @@ export async function jwtAuthMiddleware(
       userDetails = await fetchUserDetails(payload.sub);
     }
     ctx.state.user = { ...ctx.state.user, ...userDetails };
-    console.log("Updated ctx.state.user:", ctx.state.user);
     await next(); // Proceed with the next middleware/route handler only after all checks are done
   } catch (error) {
     // If there's an error, determine its nature and respond appropriately

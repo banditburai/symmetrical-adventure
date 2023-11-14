@@ -2,20 +2,19 @@
 
 import { Context, Router, send } from "./deps.ts";
 import {
+  addComment,
   checkUserLikes,
   createTuner,
   deleteTuner,
   EmptyTuner,
   FilterOptions,
+  findTunerByUrl,
   getTuner,
   getTuners,
   searchTuners,
   Tuner,
   updateLike,
   updateTuner,
-  findTunerByUrl,
-  addComment,
-  Comment,
 } from "./service.ts";
 import { userCanEdit } from "./helpers.ts";
 import { jwtAuthMiddleware, userLikeMiddleware } from "./authMiddleware.ts";
@@ -47,8 +46,10 @@ async function renderTuners(
 }
 
 function isValidUrl(url: string) {
-  const standardUrlPattern = /^https:\/\/tuner\.midjourney\.com\/[A-Za-z0-9]{7}(?:\?answer=[A-Za-z0-9]+)?$/;
-  const codeUrlPattern = /^https:\/\/tuner\.midjourney\.com\/code\/[A-Za-z0-9]+$/;
+  const standardUrlPattern =
+    /^https:\/\/tuner\.midjourney\.com\/[A-Za-z0-9]{7}(?:\?answer=[A-Za-z0-9]+)?$/;
+  const codeUrlPattern =
+    /^https:\/\/tuner\.midjourney\.com\/code\/[A-Za-z0-9]+$/;
   return standardUrlPattern.test(url) || codeUrlPattern.test(url);
 }
 
@@ -101,7 +102,7 @@ async function createTunerHandler(ctx: Context) {
     return;
   }
   const bodyResult = ctx.request.body({ type: "form-data" });
-  
+
   const body = await bodyResult.value.read();
 
   let { id, prompt, url, size } = body.fields;
@@ -139,34 +140,50 @@ async function deleteTunerHandler(ctx: Context) {
 
 async function commentFormHandler(ctx: Context) {
   const { id } = ctx.params;
-  console.log(id);
   const tuner = await getTuner(id);
   if (!tuner) {
     ctx.response.status = 404;
     ctx.response.body = "Tuner not found";
     return;
   }
-  ctx.render("comment-form.html", { id: id, prompt: tuner.prompt, url: tuner.url, comments: tuner.comments });
+  ctx.render("comment-form.html", {
+    id: id,
+    prompt: tuner.prompt,
+    url: tuner.url,
+    comments: tuner.comments,
+  });
 }
-
+async function commentsSectionHandler(ctx: Context) {
+  const { id } = ctx.params;
+  const tuner = await getTuner(id);
+  if (!tuner) {
+    ctx.response.status = 404;
+    ctx.response.body = "Tuner not found";
+    return;
+  }
+  ctx.render("comment-section.html", { comments: tuner.comments });
+}
 
 async function createCommentHandler(ctx: Context) {
   const bodyResult = ctx.request.body({ type: "form-data" });
   const body = await bodyResult.value.read();
-  const { id, newComment } = body.fields;  
+  const { id, newComment } = body.fields;
   const comment = {
-    commentId: '',
+    commentId: "",
     userId: ctx.state.user.id,
     username: ctx.state.user.username,
     pfp: ctx.state.user.pfp,
     text: newComment,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
-  const updatedComments = await addComment( id, comment);
+  const updatedTuner = await addComment(id, comment);
 
-  ctx.render("comment-form.html", updatedComments);
+  ctx.render("comment-form.html", {  id: id,
+    prompt: updatedTuner.prompt,
+    url: updatedTuner.url,
+    comments: updatedTuner.comments,});
+ 
 }
-
 
 async function tunerFormHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -189,13 +206,22 @@ async function imgHandler(ctx: Context) {
   });
 }
 
-function setResponse(ctx: Context, isValid: boolean, urlToValidate: string, errorMessage?: string) {
+function setResponse(
+  ctx: Context,
+  isValid: boolean,
+  urlToValidate: string,
+  errorMessage?: string,
+) {
   const buttonState = isValid ? "" : "disabled";
   const indicatorVisibility = isValid ? "style='visibility:hidden;'" : "";
-  const errorDisplay = errorMessage ? `<div class='error-message'>${errorMessage}</div>` : "";
+  const errorDisplay = errorMessage
+    ? `<div class='error-message'>${errorMessage}</div>`
+    : "";
 
   ctx.response.body = `
-    <div hx-target="this" hx-swap="outerHTML" class="${isValid ? "valid" : "error"}">
+    <div hx-target="this" hx-swap="outerHTML" class="${
+    isValid ? "valid" : "error"
+  }">
       <input name="url" type="url" id="url-input" hx-select-oob="#submit-button-container" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
         hx-indicator="#ind"
     placeholder="URL" value="${urlToValidate}"/>
@@ -207,30 +233,39 @@ function setResponse(ctx: Context, isValid: boolean, urlToValidate: string, erro
     </div>`;
 }
 
-
-  async function validateUrlHandler(ctx: Context) {
-    try {
-      const bodyResult = ctx.request.body({ type: "form-data" });
-      const formDataBody = await bodyResult.value.read();
-      const urlToValidate = formDataBody.fields.url?.trim() || "";
-      if (!isValidUrl(urlToValidate)) {
-        setResponse(ctx, false, urlToValidate, "Invalid URL. Please check and try again.");
-        return;
-      }
-      const existingTuner = await findTunerByUrl(urlToValidate);      
-  
-      if (existingTuner) {
-        setResponse(ctx, false, urlToValidate, "A tuner with this URL already exists. Here's the existing tuner: " + existingTuner.prompt);
-        return; 
-      }       
-      setResponse(ctx, true, urlToValidate);
-    } catch (error) {
-      console.error("Error during URL validation:", error);
-      ctx.response.status = 500;
-      ctx.response.body = "Internal server error while validating URL";
+async function validateUrlHandler(ctx: Context) {
+  try {
+    const bodyResult = ctx.request.body({ type: "form-data" });
+    const formDataBody = await bodyResult.value.read();
+    const urlToValidate = formDataBody.fields.url?.trim() || "";
+    if (!isValidUrl(urlToValidate)) {
+      setResponse(
+        ctx,
+        false,
+        urlToValidate,
+        "Invalid URL. Please check and try again.",
+      );
+      return;
     }
+    const existingTuner = await findTunerByUrl(urlToValidate);
+
+    if (existingTuner) {
+      setResponse(
+        ctx,
+        false,
+        urlToValidate,
+        "A tuner with this URL already exists. Here's the existing tuner: " +
+          existingTuner.prompt,
+      );
+      return;
+    }
+    setResponse(ctx, true, urlToValidate);
+  } catch (error) {
+    console.error("Error during URL validation:", error);
+    ctx.response.status = 500;
+    ctx.response.body = "Internal server error while validating URL";
   }
-  
+}
 
 async function removeTruncateClassHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -244,15 +279,25 @@ async function removeTruncateClassHandler(ctx: Context) {
   ctx.response.body = tunerHtml;
 }
 
-export async function updateGlobalLikes(ctx: Context, id: string, liked: boolean): Promise<void>{
+export async function updateGlobalLikes(
+  ctx: Context,
+  id: string,
+  liked: boolean,
+): Promise<void> {
   const tuner = await updateLike(id, liked);
   if (tuner) {
     ctx.response.status = 200;
     const buttonClass = liked ? "selected" : "";
     const hiddenInputValue = liked ? "false" : "true";
-    ctx.response.body = `
+    const commentsLength = tuner.comments ? tuner.comments.length : 0;
+    ctx.response.body = `     
       <div class="like-wrapper" id="like-wrapper-${tuner.id}">
-      <button class="add-comment" hx-get="/tuners/form/<%= tuner.id %>">
+      <div class="comment-count" id="comment-count-${tuner.id}">
+      <em>
+          ${commentsLength}
+      </em>
+  </div>
+      <button class="add-comment" hx-get="/comments/${tuner.id}">
                 <svg width="24px" height="24px" viewBox="0 -0.5 25 25" fill="none"
                   xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" clip-rule="evenodd"
@@ -290,18 +335,16 @@ export async function updateGlobalLikes(ctx: Context, id: string, liked: boolean
   }
 }
 
-
 async function updateLikeHandler(ctx: Context) {
   const { id } = ctx.params;
   const result = ctx.request.body({ type: "form" });
   const formData = await result.value;
   const likedParam = formData.get("liked");
   const liked = likedParam === "true";
-  
+
   await updateGlobalLikes(ctx, id, liked);
 
-  await userLikeMiddleware(ctx, id, liked); 
-
+  await userLikeMiddleware(ctx, id, liked);
 }
 
 export default new Router()
@@ -320,6 +363,8 @@ export default new Router()
   .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler)
-  .get("/comments/new/:id?", jwtAuthMiddleware, commentFormHandler)
-  .post("/comments", jwtAuthMiddleware, createCommentHandler);
-  
+
+
+  .get("/comments/:id", jwtAuthMiddleware, commentFormHandler) //initial rendering of comment form
+  .post("/comments", jwtAuthMiddleware, createCommentHandler)
+  .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler);
