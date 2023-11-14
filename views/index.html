@@ -45,7 +45,7 @@
           <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
           <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
           <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>          
-          <button class="pill" id="liked-by-me" hx-vals='{"likedbyme": "true"}' style="display: block" hx-target="#main-view">👍</button>
+          <button class="pill" id="liked-by-me" hx-vals='{"likedbyme": "true"}' style="display: block" hx-target="#main-view">❤</button>
           
         </div>
       </div>
@@ -161,6 +161,7 @@
 
 
 <script>
+
   document.addEventListener("DOMContentLoaded", function () {
 
     // Select DOM elements that will be used multiple times.
@@ -326,5 +327,17 @@
     updatePillSelectionFromURL();
     updateStateAndView();
   });
+
+  document.body.addEventListener('htmx:responseError', function(event) {
+  // Check if the error is a 401 Unauthorized
+  if (event.detail.xhr.status === 401) {
+    // Check if the request was for comments
+    const requestUrl = event.detail.xhr.responseURL;
+    if (requestUrl.includes('/comments/')) {
+      alert('You must be logged in to access this');
+    }
+  }
+});
+
 
 </script>

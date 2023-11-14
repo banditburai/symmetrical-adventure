@@ -2,6 +2,7 @@
   <span class="num-results"></span><strong>Number of results:</strong>
   <%= it.tuners.length %></span>
     <% it.tuners.forEach(tuner=> { %>
+      <div class="tuner-container">
       <li class="tuner-entry">
 
         <div class="tuner-info">
@@ -21,7 +22,7 @@
                     <%= tuner.comments ? tuner.comments.length : 0 %>
                 </em>
             </div>
-              <button class="add-comment" hx-get="/comments/<%= tuner.id %>">
+              <button class="add-comment" hx-get="/comments/<%= tuner.id %>" >
                 <svg width="24px" height="24px" viewBox="0 -0.5 25 25" fill="none"
                   xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" clip-rule="evenodd"
@@ -56,8 +57,14 @@
               </h2>
 
             </div>
-            
+            <% if(tuner.comments && tuner.comments.length > 0) { %>
+              <p class="recent-comment" hx-get="/comments/<%= tuner.id %>">
+                <strong>Recent Comment by <%= tuner.comments[tuner.comments.length - 1].username %> :</strong>
+    <%= tuner.comments[tuner.comments.length - 1].text %>
+              </p>
+            <% } %>
           </div>
+        
           <div class="entry-nav">
             <nav>
               <button>
@@ -85,7 +92,7 @@ v7.074c0,1.018,0.664,1.482,1.28,1.482c0.268,0,0.672-0.087,1.087-0.502l3.756-3.85
 c-1.42,0.234-2.866,0.358-4.337,0.358C27.088,54.75,25.639,54.622,24.227,54.387z M35.236,53.894
 c0.552-1.411,1.059-2.842,1.519-4.289l2.762,2.762C38.127,53.004,36.699,53.513,35.236,53.894z M45.084,55.106L32.69,42.711
 c-0.364-0.365-0.85-0.565-1.367-0.565s-1.003,0.201-1.367,0.565l-2.808,2.808l-0.062-18.042l18.103,0l-2.804,2.804
-c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black stroke-width="3" />
+c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke="#0e1720"/>
                   </svg>
                 </a>
               </button>
@@ -106,7 +113,7 @@ c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black
             </nav>
           </div>
         </div>
-
+      </div>
       </li>
       <% }) %>
 
@@ -117,7 +124,6 @@ c-0.752,0.753-0.752,1.979,0.001,2.733l12.441,12.347L45.084,55.106z" stroke=black
     element.classList.toggle('expanded-prompt');
     element.classList.toggle('text-overflow-clamp');
   }
-
 
   document.body.addEventListener('click', function (event) {
 

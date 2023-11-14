@@ -42,9 +42,9 @@ export async function jwtAuthMiddleware(
       userDetails = await fetchUserDetails(payload.sub);
     }
     ctx.state.user = { ...ctx.state.user, ...userDetails };
-    await next(); // Proceed with the next middleware/route handler only after all checks are done
+    await next();
   } catch (error) {
-    // If there's an error, determine its nature and respond appropriately
+   
     console.error("JWT Verification Error:", error);
     if (error.message === "Invalid session token") {
       ctx.response.status = 401;
