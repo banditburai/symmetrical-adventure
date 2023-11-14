@@ -8,8 +8,14 @@ export type Tuner = {
   prompt: string;
   url: string;
   size: string;
-  comments: string;
   likes: number;
+}
+export type Comment = {
+  userId: string;
+  username: string;
+  pfp: string; 
+  text: string;
+  timestamp: Date;
 }
 
 export type Pill = {
@@ -37,8 +43,7 @@ export const EmptyTuner: Tuner = {
   authorId: "",
   prompt: "",
   url: "",
-  size: "16",
-  comments: "",
+  size: "16",  
   likes: 0,
 }
 
@@ -80,6 +85,17 @@ if (options.likedbyme && userId){
   return { tuners: filteredTuners, count: filteredTuners.length };
 }
 
+export async function addComment(tunerId: string, comment: Comment): Promise<void> {
+  const tuner = await getTuner(tunerId);
+  if (!tuner) {
+    throw new Error(`Tuner with id ${tunerId} not found.`);
+  }
+  
+  tuner.comments.push(comment); // Add the new comment
+  await kv.set(["tuners", tunerId], tuner); // Save the updated tuner
+}
+
+
 export async function getNumberOfEntries(): Promise<number> {
   const tuners = await getTuners();
   return tuners.length;
@@ -87,8 +103,25 @@ export async function getNumberOfEntries(): Promise<number> {
 
 export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
   const tuners = await getTuners(); 
-  return tuners.find(tuner => tuner.url === url); // Return the tuner if found, undefined otherwise
+  return tuners.find(tuner => tuner.url === url); 
 }
+
+// export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
+//   const tunerId = await kv.get(["tuners_by_url", url]); // Get the tuner ID from the index
+//   if (tunerId && typeof tunerId.value === 'string') {
+//     return await getTuner(tunerId.value);  
+//   }
+//   return undefined;
+// }
+
+// async function createUrlIndexForAllTuners() {
+//   const tuners = await getTuners();
+//   for (const tuner of tuners) {
+//     const byUrlKey = ["tuners_by_url", tuner.url];
+//     await kv.set(byUrlKey, tuner.id); // Create the index entry
+//   }
+// }
+
 
 export async function getTuner(id: string): Promise<Tuner | undefined> {
   const entry = await kv.get(["tuners", id]);

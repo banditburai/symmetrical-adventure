@@ -475,3 +475,8 @@ button:enabled {
   cursor: pointer; /* Standard cursor for clickable items */
   opacity: 1; /* Full opacity for active buttons */
 }
+
+/* Default link state */
+a {
+  color: #8eb0e4; /* white color */
+}

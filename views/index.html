@@ -82,12 +82,10 @@
         const userButton = document.getElementById("user-button");
         const authLinks = document.getElementById("auth-links");
         const addButton = document.getElementById("add-button");
-        const likedbyme = document.getElementById("liked-by-me")        
         Clerk.addListener(({ user }) => {
          
           authLinks.style.display = user ? "none" : "block";
-          addButton.style.display = user ? "block" : "none";
-          // likedbyme.style.display = user ? "block" : "none";
+          addButton.style.display = user ? "block" : "none";        
 
         });
 

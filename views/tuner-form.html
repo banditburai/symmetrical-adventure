@@ -3,8 +3,8 @@
   <input type="hidden" name="id" value="<%= it.id %>" />
   <textarea name="prompt" placeholder="Prompt"><%= it.prompt %></textarea>
   <div hx-target="this" hx-swap="outerHTML">
-    <input type="url" id="url-input" hx-select-oob="#submit-button-container" form="url-form" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
-       name="url" id="form-url" hx-indicator="#ind"
+    <input type="url" id="url-input" hx-select-oob="#submit-button-container" hx-trigger="keyup changed delay:500ms" hx-post="/form/url"
+       name="url" hx-indicator="#ind" required
       placeholder="URL">
     <img id="ind" src="/three-dots.svg" class="htmx-indicator" />
   </div>
@@ -23,7 +23,6 @@
               <!-- ... other size options ... -->
   </div>
 
-  <textarea name="comments" placeholder="Comments"><%= it.comments %></textarea>
   <footer class="form-footer">
     <button class="btn secondary" hx-get="/tuners">Cancel</button>
     <div id="submit-button-container">
