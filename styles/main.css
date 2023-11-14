@@ -476,7 +476,69 @@ button:enabled {
   opacity: 1; /* Full opacity for active buttons */
 }
 
-/* Default link state */
 a {
-  color: #8eb0e4; /* white color */
+  color: #8eb0e4; 
+}
+
+.comment-section {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.comment {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.profile-pic {
+  border-radius: 50%; /* Make the image round */
+  width: 40px; /* Adjust the size as needed */
+  height: 40px; /* Adjust the size as needed */
+  margin-right: 10px;
+  border: 2px solid #ddd; /* Optional: adds a border around the image */
+}
+
+.comment-content {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.comment-content strong {
+  font-weight: bold;
+  display: block; 
+}
+
+.comment-content p {
+  font-size: 0.9em; 
+  margin-top: 5px; 
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+}
+
+.no-comments {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
+.delete-comment {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Style for the SVG icon */
+.delete-comment svg {  
+  width: 20px;
+  height: 20px;
+}
+
+.delete-comment svg:hover {
+  fill: #ff0000; 
 }

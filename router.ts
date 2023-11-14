@@ -15,8 +15,9 @@ import {
   Tuner,
   updateLike,
   updateTuner,
+  deleteComment,
 } from "./service.ts";
-import { userCanEdit } from "./helpers.ts";
+import { userCanEdit, userCanEditComment } from "./helpers.ts";
 import { jwtAuthMiddleware, userLikeMiddleware } from "./authMiddleware.ts";
 
 async function renderTuners(
@@ -146,11 +147,16 @@ async function commentFormHandler(ctx: Context) {
     ctx.response.body = "Tuner not found";
     return;
   }
+  const commentsWithPerms = tuner.comments.map((comment) => ({
+    ...comment,
+    canEdit: userCanEditComment(comment, ctx.state.user)
+  }));
+
   ctx.render("comment-form.html", {
     id: id,
     prompt: tuner.prompt,
     url: tuner.url,
-    comments: tuner.comments,
+    comments: commentsWithPerms
   });
 }
 async function commentsSectionHandler(ctx: Context) {
@@ -161,7 +167,14 @@ async function commentsSectionHandler(ctx: Context) {
     ctx.response.body = "Tuner not found";
     return;
   }
-  ctx.render("comment-section.html", { comments: tuner.comments });
+  const commentsWithPerms = tuner.comments.map((comment) => ({
+    ...comment,
+    canEdit: userCanEditComment(comment, ctx.state.user)
+  }));
+
+  ctx.render("comment-section.html", { 
+    id: tuner.id,
+    comments: commentsWithPerms });
 }
 
 async function createCommentHandler(ctx: Context) {
@@ -184,6 +197,37 @@ async function createCommentHandler(ctx: Context) {
     comments: updatedTuner.comments,});
  
 }
+
+async function deleteCommentHandler(ctx: Context) {
+  const { id, commentId } = ctx.params;
+  const tuner = await getTuner(id);
+  if (!tuner) {
+    ctx.response.status = 404;
+    ctx.response.body = "Tuner not found";
+    return;
+  }
+
+  const comment = tuner.comments.find(c => c.commentId === commentId);
+  if (!comment) {
+    ctx.response.status = 404;
+    ctx.response.body = "Comment not found";
+    return;
+  }
+
+  if (!userCanEditComment(comment, ctx.state.user)) {
+    ctx.response.status = 403; // Forbidden
+    ctx.response.body = "You are not authorized to delete this comment";
+    return;
+  }
+
+  const updatedTuner = await deleteComment(id, commentId);
+  ctx.render("comment-form.html", {  
+    id: updatedTuner.id,
+    prompt: updatedTuner.prompt,
+    url: updatedTuner.url,
+    comments: updatedTuner.comments,});
+}
+
 
 async function tunerFormHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -367,4 +411,6 @@ export default new Router()
 
   .get("/comments/:id", jwtAuthMiddleware, commentFormHandler) //initial rendering of comment form
   .post("/comments", jwtAuthMiddleware, createCommentHandler)
-  .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler);
+  .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler)
+  .delete("/comments/:id/:commentId", jwtAuthMiddleware, deleteCommentHandler);
+

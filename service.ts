@@ -99,6 +99,19 @@ export async function addComment(tunerId: string, comment: Comment): Promise<Tun
   return tuner; 
 }
 
+export async function deleteComment(tunerId: string, commentId: string): Promise<Tuner> {
+  const tuner = await getTuner(tunerId);
+  if (!tuner) {
+    throw new Error(`Tuner with id ${tunerId} not found.`);
+  }
+  const commentIndex = tuner.comments.findIndex(c => c.commentId === commentId);
+  if (commentIndex === -1) {
+    throw new Error(`Comment with id ${commentId} not found.`);
+  }
+  tuner.comments.splice(commentIndex, 1);
+  await kv.set(["tuners", tunerId], tuner);
+  return tuner;
+}
 
 export async function getNumberOfEntries(): Promise<number> {
   const tuners = await getTuners();
@@ -159,8 +172,7 @@ export async function fetchLikesForUser(userId: string): Promise<string[]> {
       if (Array.isArray(data)) {
         return data;
       } else {
-        console.error(`Expected array for user likes, received:`, data);
-        // Handle unexpected data format here, e.g., log it, alert an admin, etc.
+        console.error(`Expected array for user likes, received:`, data);        
       }
     }
   } catch (error) {
