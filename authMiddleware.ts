@@ -25,7 +25,8 @@ export async function jwtAuthMiddleware(
   ctx: Context,
   next: () => Promise<unknown>,
 ) {
-  const sessionToken = await ctx.cookies.get("__session"); // Get the token from the cookie
+  const sessionToken = await ctx.cookies.get("__session"); 
+  
   if (!sessionToken) {
     ctx.response.status = 401;
     ctx.response.body = "You must be logged in to access this";
@@ -35,11 +36,13 @@ export async function jwtAuthMiddleware(
   try {
     const publicKey = await getPublicKey();
     const payload = await verify(sessionToken, publicKey);
+    
     let userDetails;
     if (payload && payload.sub) {
       userDetails = await fetchUserDetails(payload.sub);
     }
     ctx.state.user = { ...ctx.state.user, ...userDetails };
+    console.log("Updated ctx.state.user:", ctx.state.user);
     await next(); // Proceed with the next middleware/route handler only after all checks are done
   } catch (error) {
     // If there's an error, determine its nature and respond appropriately

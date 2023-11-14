@@ -1,4 +1,4 @@
-<!-- <form hx-post="/comment/new" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data">
+<form hx-post="/comments" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data">
     <input type="hidden" name="id" value="<%= it.id %>" />
     <div class="container">
       <h2 class="text-overflow-clamp">
@@ -30,8 +30,8 @@
     <footer class="form-footer">
       <button class="btn secondary" hx-get="/tuners">Cancel</button>
       <div id="comment-submit-button-container">
-        <button type="submit" name="form-submit" class="btn primary">Save Comment</button>
+        <button id="comment-submit" type="submit" name="comment-submit" class="btn primary">Save Comment</button>
       </div>
     </footer>
-  </form> -->
+  </form>
   

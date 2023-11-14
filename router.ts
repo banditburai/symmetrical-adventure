@@ -14,6 +14,8 @@ import {
   updateLike,
   updateTuner,
   findTunerByUrl,
+  addComment,
+  Comment,
 } from "./service.ts";
 import { userCanEdit } from "./helpers.ts";
 import { jwtAuthMiddleware, userLikeMiddleware } from "./authMiddleware.ts";
@@ -108,7 +110,7 @@ async function createTunerHandler(ctx: Context) {
   if (id) {
     await updateTuner({ id, authorId, prompt, url, size });
   } else {
-    await createTuner({ prompt, authorId, url, size, likes: 0 });
+    await createTuner({ prompt, authorId, url, size, comments: [], likes: 0 });
   }
 
   await renderTuners(ctx);
@@ -137,9 +139,34 @@ async function deleteTunerHandler(ctx: Context) {
 
 async function commentFormHandler(ctx: Context) {
   const { id } = ctx.params;
-  const tuner = id ? await getTuner(id) : EmptyTuner;
-  ctx.render("comment-form.html", tuner);
+  console.log(id);
+  const tuner = await getTuner(id);
+  if (!tuner) {
+    ctx.response.status = 404;
+    ctx.response.body = "Tuner not found";
+    return;
+  }
+  ctx.render("comment-form.html", { id: id, prompt: tuner.prompt, url: tuner.url, comments: tuner.comments });
 }
+
+
+async function createCommentHandler(ctx: Context) {
+  const bodyResult = ctx.request.body({ type: "form-data" });
+  const body = await bodyResult.value.read();
+  const { id, newComment } = body.fields;  
+  const comment = {
+    commentId: '',
+    userId: ctx.state.user.id,
+    username: ctx.state.user.username,
+    pfp: ctx.state.user.pfp,
+    text: newComment,
+    timestamp: new Date()
+  };
+  const updatedComments = await addComment( id, comment);
+
+  ctx.render("comment-form.html", updatedComments);
+}
+
 
 async function tunerFormHandler(ctx: Context) {
   const { id } = ctx.params;
@@ -293,6 +320,6 @@ export default new Router()
   .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler)
-
-  .get("/comment/new/:id?", jwtAuthMiddleware, commentFormHandler);
+  .get("/comments/new/:id?", jwtAuthMiddleware, commentFormHandler)
+  .post("/comments", jwtAuthMiddleware, createCommentHandler);
   

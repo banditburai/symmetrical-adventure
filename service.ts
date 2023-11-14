@@ -8,9 +8,11 @@ export type Tuner = {
   prompt: string;
   url: string;
   size: string;
+  comments: Comment[];
   likes: number;
 }
 export type Comment = {
+  commentId?: string;
   userId: string;
   username: string;
   pfp: string; 
@@ -43,6 +45,7 @@ export const EmptyTuner: Tuner = {
   authorId: "",
   prompt: "",
   url: "",
+  comments: [],
   size: "16",  
   likes: 0,
 }
@@ -86,6 +89,7 @@ if (options.likedbyme && userId){
 }
 
 export async function addComment(tunerId: string, comment: Comment): Promise<void> {
+  comment.commentId = crypto.randomUUID();
   const tuner = await getTuner(tunerId);
   if (!tuner) {
     throw new Error(`Tuner with id ${tunerId} not found.`);
@@ -197,7 +201,7 @@ export async function removeLike(userId: string, tunerId: string): Promise<void>
 
 export async function createTuner(tuner: Omit<Tuner, 'id'>): Promise<void> {
   const id = crypto.randomUUID();
-  await kv.set(["tuners", id], {...tuner, id, likes: 0});
+  await kv.set(["tuners", id], {...tuner, id, comments: [], likes: 0});
 }
 
 export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }): Promise<void> {

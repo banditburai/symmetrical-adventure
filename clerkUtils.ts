@@ -122,12 +122,13 @@ export async function fetchUserDetails(userId: string) {
   }
 
   const userDetails = await response.json();
+
   const isAdmin = Boolean(userDetails.private_metadata?.isAdmin);
 
   return {
     id: userDetails.id,
     username: userDetails.username,
-    pfp: userDetails.imageUrl,
+    pfp: userDetails.image_url,
     isAdmin: isAdmin,
   };
 }
