@@ -398,7 +398,7 @@ export default new Router()
   .get("/fish.png", imgHandler)
   .get("/three-dots.svg", imgHandler)
   .get("/plus-sign.svg", imgHandler)
-  .get("/search", jwtAuthMiddleware, searchTunersHandler)
+  .get("/search", searchTunersHandler)
   .get("/tuners", getTunerHandler)
   .get("/tuners/form/:id?", jwtAuthMiddleware, tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
@@ -409,7 +409,7 @@ export default new Router()
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler)
 
-
+  
   .get("/comments/:id", jwtAuthMiddleware, commentFormHandler) //initial rendering of comment form
   .post("/comments", jwtAuthMiddleware, createCommentHandler)
   .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler)
