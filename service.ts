@@ -55,6 +55,7 @@ export type FilterOptions = {
   size?: string;
   raw?: boolean;
   imgprompt?: boolean;
+  niji?: boolean;
   likedbyme?: boolean;
 };
 
@@ -66,6 +67,7 @@ export const pills: Pill[] = [
   { param: 'size', value: 'nonstandard', selected: false },
   { param: 'raw', value: 'true', selected: false },
   { param: 'imgprompt', value: 'true', selected: false },
+  { param: 'niji', value: 'true', selected: false },
   { param: 'likedbyme', value: 'true', selected: false },
 ];
 
@@ -81,6 +83,7 @@ if (options.likedbyme && userId){
     if (options.key) matches &&= tuner.prompt.indexOf(options.key) > -1;
     if (options.size) matches &&= tuner.size === options.size;
     if (options.raw) matches &&= /--style raw/.test(tuner.prompt);
+    if (options.niji) matches &&= /--niji/.test(tuner.prompt);
     if (options.imgprompt) matches &&= /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(tuner.prompt);
     return matches;
   });

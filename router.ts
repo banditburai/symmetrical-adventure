@@ -78,6 +78,7 @@ async function searchTunersHandler(ctx: Context) {
     size: searchParams.get("size") ?? undefined,
     raw: searchParams.get("raw") === "true" ? true : undefined,
     imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
+    niji: searchParams.get("niji") === "true" ? true : undefined,
     likedbyme: searchParams.get("likedbyme") === "true" ? true : undefined,
   };
   let userId;
