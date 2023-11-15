@@ -135,7 +135,7 @@ async function deleteTunerHandler(ctx: Context) {
     return;
   }
 
-  await deleteTuner(id);
+  await deleteTuner(id, tuner.url);
   await renderTuners(ctx);
   // ctx.response.redirect("/tuners");
 }
@@ -409,7 +409,7 @@ export default new Router()
   .get("/atlantis.png", imgHandler)
   .get("/logo.png", imgHandler)
 
-  
+
   .get("/comments/:id", jwtAuthMiddleware, commentFormHandler) //initial rendering of comment form
   .post("/comments", jwtAuthMiddleware, createCommentHandler)
   .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler)

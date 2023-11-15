@@ -121,26 +121,19 @@ export async function getNumberOfEntries(): Promise<number> {
   return tuners.length;
 }
 
-export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
-  const tuners = await getTuners(); 
-  return tuners.find(tuner => tuner.url === url); 
-}
-
 // export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
-//   const tunerId = await kv.get(["tuners_by_url", url]); // Get the tuner ID from the index
-//   if (tunerId && typeof tunerId.value === 'string') {
-//     return await getTuner(tunerId.value);  
-//   }
-//   return undefined;
+//   const tuners = await getTuners(); 
+//   return tuners.find(tuner => tuner.url === url); 
 // }
 
-// async function createUrlIndexForAllTuners() {
-//   const tuners = await getTuners();
-//   for (const tuner of tuners) {
-//     const byUrlKey = ["tuners_by_url", tuner.url];
-//     await kv.set(byUrlKey, tuner.id); // Create the index entry
-//   }
-// }
+
+export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
+  const tunerId = await kv.get(["tuners_by_url", url]);
+  if (tunerId && typeof tunerId.value === 'string') {
+    return await getTuner(tunerId.value);
+  }
+  return undefined;
+}
 
 
 export async function getTuner(id: string): Promise<Tuner | undefined> {
@@ -220,19 +213,29 @@ export async function createTuner(tuner: Omit<Tuner, 'id'>): Promise<void> {
 }
 
 export async function updateTuner(tunerUpdate: Partial<Tuner> & { id: string }): Promise<void> {
-  // Ensure there's an ID to work with and that the object exists before trying to update.
   const tuner = await getTuner(tunerUpdate.id);
   if (!tuner) {
     throw new Error(`Tuner with id ${tunerUpdate.id} not found.`);
   }
-
-  // Now update the tuner object safely after checking for existence.
+  const urlChanged = tunerUpdate.url && tuner.url !== tunerUpdate.url;
   const updatedTuner: Tuner = {
     ...tuner,
-    ...tunerUpdate, // This approach automatically updates all fields present in tunerUpdate.
+    ...tunerUpdate, 
   };
-
-  await kv.set(["tuners", tunerUpdate.id], updatedTuner); // Directly store the updated tuner.
+  const transaction = kv.atomic();
+  transaction.set(["tuners", tunerUpdate.id], updatedTuner); // Update the primary key
+  // Update the secondary index if the URL has changed
+  if (urlChanged) {
+    transaction
+      .delete(["tuners_by_url", tuner.url]) // Delete the old secondary index entry
+      .set(["tuners_by_url", updatedTuner.url], tunerUpdate.id); // Create a new secondary index entry
+  }
+  // Commit the transaction
+  const res = await transaction.commit();
+  if (!res.ok) {
+    throw new Error("Failed to update tuner and/or secondary index");
+  }
+  
 }
 
 export async function updateLike(id: string, liked: boolean): Promise<Tuner | undefined> {
@@ -247,6 +250,7 @@ export async function updateLike(id: string, liked: boolean): Promise<Tuner | un
 }
 
 
-export async function deleteTuner(id: string): Promise<void> {
+export async function deleteTuner(id: string, url: string): Promise<void> {
   await kv.delete(["tuners", id]);
+  await kv.delete(["tuners_by_url", url]);
 }
