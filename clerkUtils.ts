@@ -1,6 +1,6 @@
 // clerkUtils.ts
 
-const CLERK_API_KEY = Deno.env.get('CLERK_API_KEY'); 
+const CLERK_SECRET_KEY = Deno.env.get('CLERK_SECRET_KEY'); 
 const API_URL = 'https://api.clerk.dev/v1'; 
 
 
@@ -50,7 +50,7 @@ export async function verifyClerkSession(sessionToken: string) {
   const response = await fetch(verifyUrl, {
     method: 'POST', // Use POST for the verification request
     headers: {
-      'Authorization': `Bearer ${CLERK_API_KEY}`, 
+      'Authorization': `Bearer ${CLERK_SECRET_KEY}`, 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ token: sessionToken }), // Send the JWT in the request body
@@ -113,7 +113,7 @@ export async function fetchUserDetails(userId: string) {
   const userDetailsUrl = `${API_URL}/users/${userId}`;
 
   const response = await safeFetch(userDetailsUrl, {
-    'Authorization': `Bearer ${CLERK_API_KEY}`,
+    'Authorization': `Bearer ${CLERK_SECRET_KEY}`,
     'Content-Type': 'application/json',
   });
 

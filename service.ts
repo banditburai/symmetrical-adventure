@@ -173,12 +173,12 @@ export async function fetchLikesForUser(userId: string): Promise<string[]> {
     }
   } catch (error) {
     console.error(`Error fetching likes for user ${userId}:`, error);
-    // Handle JSON parsing error or other fetch issues
   }
   return []; // Return an empty array as the default case
 }
 
 export async function recordUserLike(userId: string, tunerId: string, liked: boolean) {
+  console.log("You see me: ", tunerId);
   if (liked) {
     await storeLike(userId, tunerId);
   } else {
@@ -190,20 +190,14 @@ export async function storeLike(userId: string, tunerId: string): Promise<void> 
   const likesData = await kv.get(["user_likes", userId]);
   const likesSet = new Set(likesData?.value ? JSON.parse(likesData.value as string) as string[] : []);
   likesSet.add(tunerId);
-
-  // Convert the Set back to an array for storage
   await kv.set(["user_likes", userId], JSON.stringify([...likesSet]));
 }
 
 export async function removeLike(userId: string, tunerId: string): Promise<void> {
   const likesData = await kv.get(["user_likes", userId]);
   const likesSet = new Set(likesData?.value ? JSON.parse(likesData.value as string) as string[] : []);
-
-  // Remove the like if it exists
   likesSet.delete(tunerId);
-
-  // Store the potentially updated set back to the KV store
-  await kv.set(["user_likes", userId], JSON.stringify([...likesSet]));
+  await kv.set(["user_likes", userId], JSON.stringify([...likesSet]));  
 }
 
 

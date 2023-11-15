@@ -25,9 +25,10 @@ async function renderTuners(
   tunersArg?: Tuner[],
   countArg?: number,
 ) {
-  let userLikes = new Set<string>();
-  if (ctx.state.user?.id) {
+  let userLikes = ctx.state.userLikes || new Set<string>();
+  if (ctx.state.user?.id && !ctx.state.userLikes) {
     userLikes = await checkUserLikes(ctx.state.user.id);
+    ctx.state.userLikes = userLikes; 
   }
   const tuners = tunersArg ?? await getTuners();
   const count = countArg ?? tuners.length;
@@ -45,6 +46,18 @@ async function renderTuners(
     user: ctx.state.user || { id: null, isAdmin: false },
   });
 }
+
+async function renderHomeHandler(ctx: Context) {
+  if (ctx.state.user?.id && !ctx.state.userLikes) {
+    const userLikes = await checkUserLikes(ctx.state.user.id);
+    ctx.state.userLikes = userLikes; 
+  }
+
+  ctx.render("index.html", {    
+    user: ctx.state.user || { id: null, isAdmin: false },
+  });
+}
+
 
 function isValidUrl(url: string) {
   const standardUrlPattern =
@@ -393,7 +406,7 @@ async function updateLikeHandler(ctx: Context) {
 }
 
 export default new Router()
-  .get("/", (ctx) => ctx.render("index.html"))
+  .get("/", renderHomeHandler)
   .get("/main.css", cssHandler)
   .get("/fish.png", imgHandler)
   .get("/three-dots.svg", imgHandler)

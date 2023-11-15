@@ -71,6 +71,7 @@ h1 {
   margin-right: 20px;
   /* line-height: 80%; */
   font-size: 42px;
+  color: #0e1720;
 }
 
 
@@ -127,11 +128,11 @@ aside .btn {
 }
 
 .btn.secondary {
-  color: #000;
+  color: #0e1720;
 }
 
 .btn.primary {
-  background: #111;
+  background: #0e1720;
 }
 
 .btn:hover {
@@ -179,7 +180,7 @@ input[type="search"] {
   padding: 5px 10px; 
   font-size: 0.9em; 
   background: linear-gradient(to right, #E0EAFC, #CFDEF3); 
-  color: black;
+  color: #0e1720;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }

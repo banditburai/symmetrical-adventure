@@ -68,7 +68,7 @@ export async function userLikeMiddleware(
     if (userDetails) {
       // Perform actions as an authenticated user
       try {
-        await recordUserLike(userDetails.id, tunerId, liked);
+        await recordUserLike( userDetails.id, tunerId, liked);        
       } catch (error) {
         console.error("Error in userLikeMiddleware:", error);
         throw new Error("Internal server error when updating like");

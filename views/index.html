@@ -20,7 +20,8 @@
 
     <div class="header-row">
       <div class="top-nav">
-        <button id="add-button" style="display: none" class="btn primary" hx-get="/tuners/form/" hx-target="#main-view">Add</button>
+        <button id="add-button" style="display: none" class="btn primary" hx-get="/tuners/form/"
+          hx-target="#main-view">Add</button>
         <div id="auth-links">
 
           <button id="sign-in-button" class="btn primary" onclick="Clerk.openSignIn()">Sign In</button>
@@ -32,7 +33,7 @@
     <div class="header">
 
       <h1><span>🐟Tuners</span></h1>
-      <div class="search-section" hx-search-filter>
+      <div class="search-section" hx-search-filter hx-indicator="#loading-indicator">
         <input type="search" id="search-input" placeholder="Search..." name="key" hx-trigger="keyup changed delay:500ms"
           hx-target="#main-view">
 
@@ -45,9 +46,10 @@
           <button class="pill" hx-vals='{"size": "nonstandard"}' hx-target="#main-view">Nonstandard</button>
           <button class="pill" hx-vals='{"raw": "true"}' hx-target="#main-view">Raw</button>
           <button class="pill" hx-vals='{"imgprompt": "true"}' hx-target="#main-view">Image</button>
-          <button class="pill" hx-vals='{"niji": "true"}' hx-target="#main-view">Niji</button>          
-          <button class="pill" id="liked-by-me" hx-vals='{"likedbyme": "true"}' style="display: block" hx-target="#main-view">❤</button>
-          
+          <button class="pill" hx-vals='{"niji": "true"}' hx-target="#main-view">Niji</button>
+          <button class="pill" id="liked-by-me" hx-vals='{"likedbyme": "true"}' style="display: block"
+            hx-target="#main-view">❤</button>
+
         </div>
       </div>
 
@@ -61,6 +63,7 @@
 
         <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
           hx-on:htmx:timeout="alert('Failed to fetch tuners')">
+          <img id="loading-indicator" src="/three-dots.svg" class="htmx-indicator" style="display: none;"/>
           <div id="main-view"></div>
         </div>
       </main>
@@ -79,14 +82,14 @@
       try {
 
         await Clerk.load();
-  
+
         const userButton = document.getElementById("user-button");
         const authLinks = document.getElementById("auth-links");
         const addButton = document.getElementById("add-button");
         Clerk.addListener(({ user }) => {
-         
+
           authLinks.style.display = user ? "none" : "block";
-          addButton.style.display = user ? "block" : "none";        
+          addButton.style.display = user ? "block" : "none";
 
         });
 
@@ -94,15 +97,25 @@
           Clerk.mountUserButton(userButton, {
             afterSignOutUrl: "/"
           });
-        addButton.style.display = "block";      
+          addButton.style.display = "block";
         }
-      
+        const likedByMePill = document.getElementById('liked-by-me');
+        const allPill = document.getElementById('show-all');
 
-    
-  } catch (err) {
-      console.error("Error starting Clerk: ", err);
-    }
-};
+        likedByMePill.addEventListener('click', function (event) {
+          // Check if the user is logged in
+          if (!Clerk.user) {
+            // If the user is not logged in, display an alert and prevent the default action
+            alert('You must be logged in to filter by your likes.');
+            allPill.click();  
+            event.preventDefault();
+          }
+        });
+
+      } catch (err) {
+        console.error("Error starting Clerk: ", err);
+      }
+    };
 
     (() => {
       const script = document.createElement("script");
@@ -329,16 +342,16 @@
     updateStateAndView();
   });
 
-  document.body.addEventListener('htmx:responseError', function(event) {
-  // Check if the error is a 401 Unauthorized
-  if (event.detail.xhr.status === 401) {
-    // Check if the request was for comments
-    const requestUrl = event.detail.xhr.responseURL;
-    if (requestUrl.includes('/comments/')) {
-      alert('You must be logged in to access this');
+  document.body.addEventListener('htmx:responseError', function (event) {
+    // Check if the error is a 401 Unauthorized
+    if (event.detail.xhr.status === 401) {
+      // Check if the request was for comments
+      const requestUrl = event.detail.xhr.responseURL;
+      if (requestUrl.includes('/comments/')) {
+        alert('You must be logged in to access this');
+      }
     }
-  }
-});
+  });
 
 
 </script>
