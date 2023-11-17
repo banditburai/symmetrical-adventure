@@ -2,7 +2,10 @@
 
 import {Application, viewEngine, etaEngine, oakAdapter} from "./deps.ts";
 import router from "./router.ts";
+import { ClerkWithAuth } from "./authMiddleware.ts";
 const app = new Application();
+
+
 
 app.use(
   viewEngine(oakAdapter, etaEngine, {
@@ -10,6 +13,7 @@ app.use(
   })
 );
 
+app.use(ClerkWithAuth);
 
 app.use(router.routes());
 app.use(router.allowedMethods());

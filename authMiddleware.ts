@@ -4,8 +4,35 @@ import { Context } from "./deps.ts";
 import { recordUserLike } from "./service.ts";
 import { User } from "./service.ts";
 
+
+
+export async function ClerkWithAuth(ctx: Context, next: () => Promise<unknown>): Promise<void> {    
+    const sessionToken = await ctx.cookies.get("__session");
+    if (sessionToken) {
+      try {
+        const publicKey = await getPublicKey();
+        const payload = await verify(sessionToken, publicKey); 
+        if (payload && payload.sub) {
+          const userDetails = await fetchUserDetails(payload.sub);
+          ctx.state.user = userDetails; // Set user details in state
+        } else {
+          ctx.state.user = { isAuthenticated: false };
+        }
+      } catch (error) {
+        console.error("JWT Verification Error:", error);
+        ctx.state.user = { isAuthenticated: false };
+      }
+    } else {
+      // Assign an empty auth object if no session exists
+      ctx.state.user = { isAuthenticated: false };
+    }
+  
+    await next(); // Proceed to the next middleware
+  }
+  
+
 async function verifyJWTAndGetUserDetails(
-  sessionToken: string,
+  sessionToken: string
 ): Promise<User | null> {
   try {
     const publicKey = await getPublicKey();
@@ -21,7 +48,8 @@ async function verifyJWTAndGetUserDetails(
   }
 }
 
-export async function jwtAuthMiddleware(
+
+export async function ClerkRequireAuth(
   ctx: Context,
   next: () => Promise<unknown>,
 ) {
@@ -43,6 +71,7 @@ export async function jwtAuthMiddleware(
     }
     ctx.state.user = { ...ctx.state.user, ...userDetails };
     await next();
+    
   } catch (error) {
    
     console.error("JWT Verification Error:", error);

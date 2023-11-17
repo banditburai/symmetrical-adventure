@@ -188,13 +188,13 @@ input[type="search"] {
 .pills button:hover {
   background: linear-gradient(to right, #CFDEF3, #E0EAFC); /* Slightly different gradient on hover */
   transform: translateY(-2px); /* Lift button on hover */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Shadow for depth */
 }
 
 .pills button.selected {
   background: linear-gradient(to right, #f7971e, #ffd200); /* Distinct gradient for selected state */
   color: #0e1720; /* Dark text for selected state */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Consistent shadow */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Consistent shadow */
 }
 
 /* .pills {
@@ -251,7 +251,7 @@ form {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: var(--radius);
   margin: var(--margin) 0;
   
@@ -273,7 +273,7 @@ form {
 }
 
 .tuners .tuner-entry:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
   /* Slightly larger shadow on hover */
 }
 
@@ -307,7 +307,7 @@ form {
 }
 
 .tuners .tuner-entry nav {
-  margin-top: 30px;
+  /* margin-top: 30px; */
   margin-left: auto;
   display: flex;
   align-items: flex-start;
@@ -332,9 +332,7 @@ form {
   fill: #CFDEF3;
 }
 
-.tuners .like.selected svg {
-  fill: #ffc107;
-}
+
 
 .tuners p {
   margin: 0px 0 0;
@@ -667,4 +665,12 @@ hr {
   font-weight: bold;
   font-size: 0.7em;
   color: #333;
+}
+
+
+.tuners .like svg {
+  fill: transparent; /* Default state */
+}
+.tuners .like.selected  svg{
+  fill: #ffc107;
 }

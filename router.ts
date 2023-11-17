@@ -18,20 +18,21 @@ import {
   updateTuner,
 } from "./service.ts";
 import { userCanEdit, userCanEditComment } from "./helpers.ts";
-import { jwtAuthMiddleware, userLikeMiddleware } from "./authMiddleware.ts";
+import { ClerkRequireAuth, userLikeMiddleware } from "./authMiddleware.ts";
 
 async function renderTuners(
   ctx: Context,
   tunersArg?: Tuner[],
   countArg?: number,
 ) {
+  const user = ctx.state.user;
   const tuners = tunersArg ?? await getTuners();
   const count = countArg ?? tuners.length;
   tuners.sort((a, b) => b.likes - a.likes || Math.random() - 0.5);
   const processedTuners = tuners.map((tuner) => {
     return {
       ...tuner,
-      canEdit: userCanEdit(tuner, ctx.state.user),
+      canEdit: userCanEdit(tuner, user),
     };
   });
   ctx.render("tuners.html", {
@@ -259,10 +260,14 @@ async function cssHandler(ctx: Context) {
 
 async function imgHandler(ctx: Context) {
   const imagePath = ctx.request.url.pathname;
+  const fileExtension = imagePath.split('.').pop();
   await send(ctx, imagePath, {
     root: `${Deno.cwd()}/img`,
     index: "index.html",
   });
+  if (fileExtension === 'svg') {
+    ctx.response.headers.set('Content-Type', 'image/svg+xml');
+  }
 }
 
 function setResponse(
@@ -351,14 +356,7 @@ function buttonResponse(ctx: Context, tuner: Tuner, liked: boolean) {
         id="like-${tuner.id}"
           hx-post="/tuners/like/${tuner.id}"                   
           hx-trigger="click">             
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon like-icon"
-        width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-        <path
-          d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3">
-        </path>
-      </svg>
+          <img src="/like.svg" alt="Icon to add a like">
     </button>
   </form>`;
 }
@@ -398,20 +396,26 @@ export default new Router()
   .get("/main.css", cssHandler)
   .get("/fish.png", imgHandler)
   .get("/three-dots.svg", imgHandler)
-  .get("/plus-sign.svg", imgHandler)
+  .get("/comment-smily.svg", imgHandler)
+  .get("/world.svg", imgHandler)
+  .get("/twitter.svg", imgHandler)
+  .get("/discord.svg", imgHandler)
+  .get("/like.svg", imgHandler)
+  .get("/like-selected.svg", imgHandler)
+  .get("/can-edit.svg", imgHandler)
+  .get("/trash.svg", imgHandler)
   .get("/search", searchTunersHandler)
   .post("/search", searchTunersHandler)
   .get("/tuners", getTunerHandler)
-  .get("/tuners/form/:id?", jwtAuthMiddleware, tunerFormHandler)
+  .get("/tuners/form/:id?", ClerkRequireAuth, tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
-  .post("/tuners", jwtAuthMiddleware, createTunerHandler)
+  .post("/tuners", ClerkRequireAuth, createTunerHandler)
   .post("/form/url", validateUrlHandler)
   .post("/tuners/like/:id", updateLikeHandler)
-  .delete("/tuners/:id", jwtAuthMiddleware, deleteTunerHandler)
-  .get("/atlantis.png", imgHandler)
+  .delete("/tuners/:id", ClerkRequireAuth, deleteTunerHandler)
   .get("/logo.png", imgHandler)
-  .get("/comments/:id", jwtAuthMiddleware, commentFormHandler) //initial rendering of comment form
-  .post("/comments", jwtAuthMiddleware, createCommentHandler)
-  .get("/comments/section/:id", jwtAuthMiddleware, commentsSectionHandler)
-  .delete("/comments/:id/:commentId", jwtAuthMiddleware, deleteCommentHandler)
-  .get("/authUser/likes", jwtAuthMiddleware, authInitLikesHandler);
+  .get("/comments/:id", ClerkRequireAuth, commentFormHandler) //initial rendering of comment form
+  .post("/comments", ClerkRequireAuth, createCommentHandler)
+  .get("/comments/section/:id", ClerkRequireAuth, commentsSectionHandler)
+  .delete("/comments/:id/:commentId", ClerkRequireAuth, deleteCommentHandler)
+  .get("/authUser/likes", ClerkRequireAuth, authInitLikesHandler);
