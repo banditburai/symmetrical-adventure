@@ -25,7 +25,7 @@ body {
   /* max-width: 1200px;  */
   /* margin: auto;  */
   padding: 0 15px; 
-  overflow: hidden;
+  /* overflow: hidden;  */
 
 }
 
@@ -77,7 +77,7 @@ h1 {
 
 .content {
   display: flex;
-  overflow: auto;
+  /* overflow: auto; */
 }
 
 aside {
@@ -251,15 +251,12 @@ form {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  
   border-radius: var(--radius);
-  
   margin: var(--margin) 0;
   
   padding: 10px 5px;
-  overflow: hidden;
+  /* overflow: hidden; */
   transition: box-shadow 0.3s ease;
 }
 
@@ -267,7 +264,6 @@ form {
   display: flex;
   flex-direction: row;
   /* align-items:first baseline; */
-
 }
 
 
@@ -349,6 +345,11 @@ form {
   align-items: flex-end;
   justify-content: flex-end;
   margin-left: auto;
+}
+
+.tuners .like-form {
+  display: flex;
+  margin: 0;
 }
 
 .tuners #like-count {
