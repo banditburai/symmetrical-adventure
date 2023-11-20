@@ -15,6 +15,7 @@ export async function ClerkWithAuth(ctx: Context, next: () => Promise<unknown>):
         if (payload && payload.sub) {
           const userDetails = await fetchUserDetails(payload.sub);
           ctx.state.user = userDetails; // Set user details in state
+          
         } else {
           ctx.state.user = { isAuthenticated: false };
         }

@@ -37,6 +37,7 @@ export interface User {
   username: string;
   pfp: string;
   isAdmin?: boolean;
+  isAuthenticated?: boolean;
 }
 
 export const currentUser: User = {
