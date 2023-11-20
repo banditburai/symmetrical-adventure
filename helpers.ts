@@ -7,7 +7,7 @@ export function userCanEdit(tuner: Tuner, user?: User): boolean {
   if (!user || !tuner) {
     return false;
   }
-
+// console.log(user.id, tuner.authorId);
   
   return user.id === tuner.authorId || Boolean(user.isAdmin);
 }

@@ -42,10 +42,10 @@ function renderTuners(
   const processedTuners = tuners.map((tuner) => {
     return {
       ...tuner,
-      canEdit: userCanEdit(tuner, user),
+      canEdit: false,
     };
   });
-
+// console.log(processedTuners);
   ctx.render("tuners.html", {
     tuners: processedTuners,
     count: totalTunersCount,

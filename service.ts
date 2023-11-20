@@ -125,9 +125,9 @@ export async function getTuners(
   const cursor = options.cursor;
   let nextCursor: string | undefined = cursor;
 
-  while (tuners.length < 20) {
+  while (tuners.length < 10) {
     const iteratorOptions: Deno.KvListOptions = {
-      limit: 21, 
+      limit: 11, 
       cursor: nextCursor,
     };
 
@@ -140,7 +140,7 @@ export async function getTuners(
         const tuner = entry.value as Tuner;
         if (matchesFilter(tuner, options)) {
           tuners.push(tuner);
-          if (tuners.length === 20)
+          if (tuners.length === 10)
           {
             iterator.next();
           } 
@@ -150,7 +150,7 @@ export async function getTuners(
     }
 
     // Break the while loop if no more entries to process
-    if (entriesProcessed < 20) break;
+    if (entriesProcessed < 10) break;
   }
 
   return { 
