@@ -11,6 +11,12 @@ export type Tuner = {
   comments: Comment[];
   likes: number;
 };
+
+export type SearchTunersResult = {
+  tuners: Tuner[];  
+  nextCursor?: string;
+};
+
 export type Comment = {
   commentId?: string;
   userId: string;
@@ -58,6 +64,8 @@ export type FilterOptions = {
   niji?: boolean;
   likedbyme?: boolean;
   likedbyuser?: string[];
+  cursor?: string,
+  url?: string,
 };
 
 export const pills: Pill[] = [
@@ -72,30 +80,168 @@ export const pills: Pill[] = [
   { param: "likedbyme", value: "true", selected: false },
 ];
 
-export async function searchTuners(
-  options: FilterOptions,
-  likedByUser?: string[],
-): Promise<{ tuners: Tuner[]; count: number }> {
-  const tuners = await getTuners();
-  const filteredTuners = tuners.filter((tuner) => {
-    let matches = true;
-    if (options.key) matches &&= tuner.prompt.indexOf(options.key) > -1;
-    if (options.size) matches &&= tuner.size === options.size;
-    if (options.raw) matches &&= /--style raw/.test(tuner.prompt);
-    if (options.niji) matches &&= /--niji/.test(tuner.prompt);
-    if (options.imgprompt) {
-      matches &&= /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(
-        tuner.prompt,
-      );
-    }
-    // Check if the tuner is liked by the user (if likedByUser array is provided)
-    if (likedByUser && likedByUser.length > 0) {
-      matches &&= likedByUser.includes(tuner.id);
-    }
-    return matches;
-  });
+// export async function searchTuners(
+//   options: FilterOptions,
+//   cursor: string | undefined,
+//   limit: number
+// ): Promise<SearchTunersResult> {
+//   const tuners: Tuner[] = [];
+//   let nextCursor: string | undefined = cursor;
 
-  return { tuners: filteredTuners, count: filteredTuners.length };
+//   const iteratorOptions: Deno.KvListOptions = {
+//     limit: limit,
+//     cursor: nextCursor,
+//   };
+
+//   const iterator = kv.list({ prefix: ['tuners'] }, iteratorOptions);
+//   for await (const entry of iterator) {
+//     if (entry.value && typeof entry.value === 'object') {
+//       const tuner = entry.value as Tuner;
+//       if (matchesFilter(tuner, options)) {
+//         tuners.push(tuner);
+//       }
+//     }
+//     nextCursor = iterator.cursor;
+//   }
+
+//   return {
+//     tuners: tuners,
+//     hasResults: tuners.length > 0,
+//     nextCursor: nextCursor
+//   };
+// }
+
+
+export async function getTuner(id: string): Promise<Tuner | undefined> {
+  const entry = await kv.get(["tuners", id]);
+  return entry ? entry.value as Tuner : undefined; // Safe type assertion with a fallback to undefined.
+}
+
+
+export async function getTuners(
+  options: FilterOptions,  
+): Promise<SearchTunersResult> {
+  const tuners: Tuner[] = [];
+  const cursor = options.cursor;
+  let nextCursor: string | undefined = cursor;
+
+  while (tuners.length < 20) {
+    const iteratorOptions: Deno.KvListOptions = {
+      limit: 21, 
+      cursor: nextCursor,
+    };
+
+    const iterator = kv.list({ prefix: ['tuners'] }, iteratorOptions);
+    let entriesProcessed = 0;
+
+    for await (const entry of iterator) {
+      entriesProcessed++;
+      if (entry.value && typeof entry.value === 'object') {
+        const tuner = entry.value as Tuner;
+        if (matchesFilter(tuner, options)) {
+          tuners.push(tuner);
+          if (tuners.length === 20)
+          {
+            iterator.next();
+          } 
+        }
+      }
+      nextCursor = iterator.cursor;
+    }
+
+    // Break the while loop if no more entries to process
+    if (entriesProcessed < 20) break;
+  }
+
+  return { 
+    tuners: tuners,    
+    nextCursor: nextCursor
+  };
+}
+
+
+export async function countTuners(options?: FilterOptions): Promise<number> {
+  let count = 0;
+  const entries = kv.list({ prefix: ["tuners"] });
+
+  for await (const entry of entries) {
+    if (entry && typeof entry.value === "object" && entry.value !== null) {
+      const tuner = entry.value as Tuner;
+
+      // If filters are provided, apply them; otherwise, count all entries
+      if (!options || matchesFilter(tuner, options)) {
+        count++;
+      }
+    }
+  }
+
+  return count;
+}
+
+
+// export async function getTuners(cursor: string | undefined, limit: number): Promise<{ tuners: Tuner[], nextCursor?: string }> {
+//   const tuners: Tuner[] = [];
+//   let nextCursor: string | undefined = cursor;
+
+//   const options: Deno.KvListOptions = {
+//     limit: limit,
+//     cursor: nextCursor
+//   };
+
+//   const iterator = kv.list({ prefix: ['tuners'] }, options);
+//   for await (const entry of iterator) {
+//     if (entry.value && typeof entry.value === 'object') {
+//       tuners.push(entry.value as Tuner);
+//     }
+//     nextCursor = iterator.cursor;
+//   }
+//   return { tuners, nextCursor };
+// }
+
+// export async function countFilteredTuners(options: FilterOptions): Promise<number> {
+//   let count = 0;
+//   const entries = kv.list({ prefix: ["tuners"] });
+
+//   for await (const entry of entries) {
+//     if (typeof entry.value === "object" && entry.value !== null) {
+//       const tuner = entry.value as Tuner;
+//       if (matchesFilter(tuner, options)) {
+//         count++;
+//       }
+//     }
+//   }
+//   return count;
+// }
+
+// export async function getTotalTunerCount(): Promise<number> {
+//   let count = 0;
+//   const entries = kv.list({ prefix: ["tuners"] });
+
+//   for await (const entry of entries) {
+//       if (entry && typeof entry.value === "object" && entry.value !== null) {
+//           count++;
+//       }
+//   }
+
+//   return count;
+// }
+
+
+function matchesFilter(tuner: Tuner, options: FilterOptions): boolean {
+  let matches = true;
+  if (options.key) matches &&= tuner.prompt.indexOf(options.key) > -1;
+  if (options.size) matches &&= tuner.size === options.size;
+  if (options.raw) matches &&= /--style raw/.test(tuner.prompt);
+  if (options.niji) matches &&= /--niji/.test(tuner.prompt);
+  if (options.imgprompt) {
+    matches &&= /(https:\/\/s\.mj\.run\/|\.png|\.jpeg|\.webp)/.test(
+      tuner.prompt,
+    );
+  }
+  if (options.likedbyuser && options.likedbyuser.length > 0) {
+    matches &&= options.likedbyuser.includes(tuner.id);
+  }
+  return matches;
 }
 
 export async function addComment(
@@ -131,11 +277,6 @@ export async function deleteComment(
   return tuner;
 }
 
-export async function getNumberOfEntries(): Promise<number> {
-  const tuners = await getTuners();
-  return tuners.length;
-}
-
 // export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
 //   const tuners = await getTuners();
 //   return tuners.find(tuner => tuner.url === url);
@@ -147,24 +288,6 @@ export async function findTunerByUrl(url: string): Promise<Tuner | undefined> {
     return await getTuner(tunerId.value);
   }
   return undefined;
-}
-
-export async function getTuner(id: string): Promise<Tuner | undefined> {
-  const entry = await kv.get(["tuners", id]);
-  return entry ? entry.value as Tuner : undefined; // Safe type assertion with a fallback to undefined.
-}
-
-export async function getTuners(): Promise<Tuner[]> {
-  const tuners = [] as Tuner[];
-
-  const entries = kv.list({ prefix: ["tuners"] });
-  for await (const entry of entries) {
-    if (typeof entry.value === "object" && entry.value !== null) {
-      tuners.push(entry.value as Tuner);
-    }
-  }
-
-  return tuners;
 }
 
 export async function fetchLikesForUser(userId: string): Promise<string[]> {

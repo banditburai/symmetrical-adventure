@@ -62,7 +62,7 @@
       <main>
 
         <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
-          hx-on:htmx:timeout="alert('Failed to fetch tuners')">
+          hx-on:htmx:timeout="alert('Failed to fetch tuners')">        
           <img id="loading-indicator" src="/three-dots.svg" class="htmx-indicator" style="display: none;" />
           <div id="main-view"></div>
         </div>
@@ -138,7 +138,7 @@
 
 <div id="user-likes" hx-get="/authUser/likes" hx-trigger="changed" style="display:none;"></div>
 <form id="likes-storage-form" method="post" hx-target="#main-view" style="display: none"
-  hx-encoding="multipart/form-data">>
+  hx-encoding="multipart/form-data">
   <input type="hidden" id="likes-input" style="display: none" name="likedbyuser" value="">
 </form>
 
@@ -154,7 +154,7 @@
     const allPill = document.getElementById('show-all');
     const sizePills = document.querySelectorAll('.pill[hx-vals*="size"]');
     const filterPills = document.querySelectorAll('.pill[hx-vals*="true"]');
-
+        
     const likedByMePill = document.getElementById('liked-by-me');
     likedByMePill.addEventListener('click', function () {
       const userLikes = JSON.parse(localStorage.getItem('userLikes')) || [];
@@ -172,7 +172,7 @@
       }
     }
 
-    function updateURL() {
+     window.updateURL = function() {
       // Start with an empty URLSearchParams object.
       const params = new URLSearchParams();
 
@@ -221,7 +221,7 @@
     }
 
     // Build search parameters from the current state for an HTMX request.
-    function buildSearchParams() {
+    window.buildSearchParams = function() {
       // Construct an object to hold search parameters.
       const searchParams = {};
       if (searchInput.value) {
@@ -238,6 +238,10 @@
     searchInput.addEventListener('input', () => {
       updateStateAndView();
     });
+
+
+
+
 
     allPill.addEventListener('click', resetFilters); // Reset filters when 'All' pill is clicked.
 
@@ -278,29 +282,29 @@
     }
 
     // New consolidated function to update state and view.
-    function updateStateAndView() {
+    window.updateStateAndView = function() {
       updateURL();
       triggerHTMXUpdate();
     }
 
-    // Function to build the base URL or URL with search parameters
-    function constructHTMXGetUrl() {
+// Function to build the base URL or URL with search parameters
+    window.constructHTMXGetUrl = function() {
       // Extract the base URL and start building the full URL.
       const baseUrl = "/search";
-      const searchParams = buildSearchParams(); // This includes both filter and search key parameters.
-
+      const searchParams = buildSearchParams();            
       // If there are parameters to add to the URL, append them.
       const queryString = new URLSearchParams(searchParams).toString();
       return baseUrl + (queryString ? '?' + queryString : ''); // Append parameters if any exist.
     }
 
     // Function to trigger the HTMX request with the new URL
-    function triggerHTMXUpdate() {
+    window.triggerHTMXUpdate = function() {
       const htmxTarget = htmx.find("#main-view");
       const newUrl = constructHTMXGetUrl();
 
-
-      if (likedByMePill.classList.contains('selected')) {
+      // document.dispatchEvent(new CustomEvent('searchUpdated', { detail: { newUrl } }));
+      
+      if (likedByMePill.classList.contains('selected')) { 
         // Send a POST request with the form data
         htmx.ajax('POST', newUrl, { source: '#likes-storage-form', swap: '${htmxTarget}' })
 

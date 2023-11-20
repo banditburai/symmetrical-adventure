@@ -3,6 +3,7 @@
 import { Context, Router, send } from "./deps.ts";
 import {
   addComment,
+  countTuners,
   createTuner,
   deleteComment,
   deleteTuner,
@@ -12,7 +13,6 @@ import {
   findTunerByUrl,
   getTuner,
   getTuners,
-  searchTuners,
   Tuner,
   updateLike,
   updateTuner,
@@ -20,26 +20,81 @@ import {
 import { userCanEdit, userCanEditComment } from "./helpers.ts";
 import { ClerkRequireAuth, userLikeMiddleware } from "./authMiddleware.ts";
 
-async function renderTuners(
+function lcg(seed: number) {
+  return () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+}
+
+function renderTuners(
   ctx: Context,
-  tunersArg?: Tuner[],
-  countArg?: number,
+  totalTunersCount: number,
+  tuners: Tuner[],
+  nextCursor: string,
+  isInitialLoad: boolean,
+  options: FilterOptions,
 ) {
   const user = ctx.state.user;
-  const tuners = tunersArg ?? await getTuners();
-  const count = countArg ?? tuners.length;
-  tuners.sort((a, b) => b.likes - a.likes || Math.random() - 0.5);
+  const seed = 12345;
+  const random = lcg(seed);
+  tuners.sort((a, b) => b.likes - a.likes || random() - 0.5);
   const processedTuners = tuners.map((tuner) => {
     return {
       ...tuner,
       canEdit: userCanEdit(tuner, user),
     };
   });
+
   ctx.render("tuners.html", {
     tuners: processedTuners,
-    count: count,
+    count: totalTunersCount,
+    cursor: nextCursor,
     user: ctx.state.user || { id: null, isAdmin: false },
+    isInitialLoad,
+    url: options.url,
   });
+}
+
+async function fetchTunersHandler(ctx: Context) {
+  const requestMethod = ctx.request.method;
+  const searchParams = ctx.request.url.searchParams;
+  const isInitialLoad = requestMethod === "GET"; 
+
+  const filterOptions = await extractFilterOptions(
+    ctx,
+    requestMethod,
+    searchParams,
+  );
+  
+  const totalTunersCount = await countTuners(filterOptions);
+  if (totalTunersCount === 0) {
+    ctx.render("no-results.html", {
+      message: "No tuners found matching your criteria.",
+    });
+    return;
+  }
+
+  const searchResult = await getTuners(filterOptions);
+  const nextCursor = searchResult.nextCursor || "";
+  
+  const processedTuners = searchResult.tuners.map((tuner) => {
+    const sanitizedPrompt = sanitizeImageLinksForHTML(tuner.prompt);
+    return {
+      ...tuner,
+      prompt: sanitizedPrompt,
+      canEdit: userCanEdit(tuner, ctx.state.user),
+    };
+  });
+
+  renderTuners(
+    ctx,
+    totalTunersCount,
+    processedTuners,
+    nextCursor,
+    isInitialLoad,
+    filterOptions,
+  );
 }
 
 function isValidUrl(url: string) {
@@ -50,9 +105,15 @@ function isValidUrl(url: string) {
   return standardUrlPattern.test(url) || codeUrlPattern.test(url);
 }
 
-async function getTunerHandler(ctx: Context) {
-  await renderTuners(ctx);
-}
+// async function getTunerHandler(ctx: Context) {
+//   const searchParams = ctx.request.url.searchParams;
+//   const cursor = searchParams.get("cursor");
+//   const isInitialLoad = !cursor;
+//   const { limit } = getPageAndLimit(ctx, 5);
+//   const tunersResult = await getTuners(cursor, limit);
+//   const totalTunersCount = await getTotalTunerCount();
+//   await renderTuners(ctx, totalTunersCount, tunersResult.tuners, tunersResult.nextCursor, isInitialLoad);
+// }
 
 function sanitizeImageLinksForHTML(text: string) {
   const imageUrlRegex = /https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?/gi;
@@ -67,48 +128,113 @@ function sanitizeImageLinksForHTML(text: string) {
   return text;
 }
 
-async function searchTunersHandler(ctx: Context) {
+async function extractFilterOptions(
+  ctx: Context,
+  requestMethod: string,
+  searchParams: URLSearchParams  
+): Promise<FilterOptions> {
   let likedbyuser: string[] = [];
+  let cursor: string | undefined = undefined;  
+  const headers = ctx.request.headers;
+  const currentUrl = headers.get('HX-Current-URL');
 
-  if (ctx.request.method === "POST") {
+  if (requestMethod === "POST") {
     try {
       const bodyResult = ctx.request.body({ type: "form-data" });
       const body = await bodyResult.value.read();
+
       const rawLikedByUser = body.fields.likedbyuser;
-     // Check if the received data is a string and parse it
-     if (typeof rawLikedByUser === "string") {
-      likedbyuser = JSON.parse(rawLikedByUser);
-    } else if (Array.isArray(rawLikedByUser)) {
-      likedbyuser = rawLikedByUser;
-    }
+      cursor = body.fields.cursor;      
+
+      if (rawLikedByUser) {
+        if (typeof rawLikedByUser === "string") {
+          likedbyuser = JSON.parse(rawLikedByUser);
+        } else if (Array.isArray(rawLikedByUser)) {
+          likedbyuser = rawLikedByUser;
+        }        
+      }
     } catch (error) {
-      // Handle JSON parsing error
-      console.error("Error parsing JSON body:", error);
+      console.error("Error parsing JSON likes:", error);
       ctx.response.status = 400; // Bad Request
-      return;
+      return {};
     }
   }
-  const searchParams = ctx.request.url.searchParams;
-  const filterOptions: FilterOptions = {
-    key: searchParams.get("key") ?? undefined,
-    size: searchParams.get("size") ?? undefined,
-    raw: searchParams.get("raw") === "true" ? true : undefined,
-    imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
-    niji: searchParams.get("niji") === "true" ? true : undefined,
-    likedbyme: searchParams.get("likedbyme") === "true" ? true : undefined,
-  };
-  
-  let { tuners, count } = await searchTuners(filterOptions, likedbyuser);
-  tuners = tuners.map((tuner) => {
-    const sanitizedPrompt = sanitizeImageLinksForHTML(tuner.prompt);
-    return {
-      ...tuner,
-      prompt: sanitizedPrompt,
-    };
-  });
+  let queryString="";
+  let query = new URLSearchParams();
+  if (currentUrl) {
+    const url = new URL(currentUrl);
+    queryString = url.search;
+    query = url.searchParams;
+  }
 
-  await renderTuners(ctx, tuners, count);
+
+  return {
+    key: query.get("key") ?? undefined,
+    size: query.get("size") ?? undefined,
+    raw: query.get("raw") === "true" ? true : undefined,
+    imgprompt: query.get("imgprompt") === "true" ? true : undefined,
+    niji: query.get("niji") === "true" ? true : undefined,
+    likedbyme: query.get("likedbyme") === "true" ? true : undefined,
+    likedbyuser: likedbyuser ?? undefined,
+    cursor: cursor ?? undefined,
+    url: queryString,    
+  };
 }
+
+// async function searchTunersHandler(ctx: Context) {
+//   let likedbyuser: string[] = [];
+
+//   if (ctx.request.method === "POST") {
+//     try {
+//       const bodyResult = ctx.request.body({ type: "form-data" });
+//       const body = await bodyResult.value.read();
+//       const rawLikedByUser = body.fields.likedbyuser;
+//       if (typeof rawLikedByUser === "string") {
+//         likedbyuser = JSON.parse(rawLikedByUser);
+//       } else if (Array.isArray(rawLikedByUser)) {
+//         likedbyuser = rawLikedByUser;
+//       }
+//     } catch (error) {
+//       console.error("Error parsing JSON body:", error);
+//       ctx.response.status = 400; // Bad Request
+//       return;
+//     }
+//   }
+//   const searchParams = ctx.request.url.searchParams;
+
+//   const filterOptions: FilterOptions = {
+//     key: searchParams.get("key") ?? undefined,
+//     size: searchParams.get("size") ?? undefined,
+//     raw: searchParams.get("raw") === "true" ? true : undefined,
+//     imgprompt: searchParams.get("imgprompt") === "true" ? true : undefined,
+//     niji: searchParams.get("niji") === "true" ? true : undefined,
+//     likedbyme: searchParams.get("likedbyme") === "true" ? true : undefined,
+//     likedbyuser: likedbyuser,
+//   };
+//   console.log("FilterOptions: ", filterOptions);
+//   const cursor = searchParams.get("cursor");
+//   const isInitialLoad = !cursor;
+//   const { limit } = getPageAndLimit(ctx);
+//   const searchResult = await searchTuners(filterOptions, cursor, limit);
+//   if (!searchResult.hasResults) {
+//     // Render a specific template for no results
+//     ctx.render("no-results.html", {
+//       message: "No tuners found matching your criteria.",
+//     });
+//   } else {
+//     const totalTunersCount = await (countFilteredTuners(filterOptions));
+//     console.log("totalTunersCount from Search:", totalTunersCount);
+//     const tuners = searchResult.tuners.map((tuner) => {
+//       const sanitizedPrompt = sanitizeImageLinksForHTML(tuner.prompt);
+//       return {
+//         ...tuner,
+//         prompt: sanitizedPrompt,
+//       };
+//     });
+
+//     await renderTuners(ctx, totalTunersCount, tuners, searchResult.nextCursor, isInitialLoad);
+//   }
+// }
 
 async function createTunerHandler(ctx: Context) {
   if (!ctx.state.user || !ctx.state.user.id) {
@@ -129,13 +255,13 @@ async function createTunerHandler(ctx: Context) {
     await createTuner({ prompt, authorId, url, size, comments: [], likes: 0 });
   }
 
-  await renderTuners(ctx);
+  // await renderTuners(ctx);
   ctx.response.redirect("/tuners");
 }
 
 async function deleteTunerHandler(ctx: Context) {
   const { id } = ctx.params;
-  const tuner = await getTuner(id); // Attempt to fetch the tuner by ID
+  const tuner = await getTuner(id); 
   if (!tuner) {
     ctx.response.status = 404; // Not Found
     ctx.response.body = "Tuner not found";
@@ -149,8 +275,8 @@ async function deleteTunerHandler(ctx: Context) {
   }
 
   await deleteTuner(id, tuner.url);
-  await renderTuners(ctx);
-  // ctx.response.redirect("/tuners");
+  // await renderTuners(ctx);
+  ctx.response.redirect("/tuners");
 }
 
 async function commentFormHandler(ctx: Context) {
@@ -260,13 +386,13 @@ async function cssHandler(ctx: Context) {
 
 async function imgHandler(ctx: Context) {
   const imagePath = ctx.request.url.pathname;
-  const fileExtension = imagePath.split('.').pop();
+  const fileExtension = imagePath.split(".").pop();
   await send(ctx, imagePath, {
     root: `${Deno.cwd()}/img`,
     index: "index.html",
   });
-  if (fileExtension === 'svg') {
-    ctx.response.headers.set('Content-Type', 'image/svg+xml');
+  if (fileExtension === "svg") {
+    ctx.response.headers.set("Content-Type", "image/svg+xml");
   }
 }
 
@@ -400,13 +526,15 @@ export default new Router()
   .get("/world.svg", imgHandler)
   .get("/twitter.svg", imgHandler)
   .get("/discord.svg", imgHandler)
+  .get("/cry.svg", imgHandler)
   .get("/like.svg", imgHandler)
   .get("/like-selected.svg", imgHandler)
   .get("/can-edit.svg", imgHandler)
   .get("/trash.svg", imgHandler)
-  .get("/search", searchTunersHandler)
-  .post("/search", searchTunersHandler)
-  .get("/tuners", getTunerHandler)
+  .get("/search", fetchTunersHandler)
+  .post("/search", fetchTunersHandler)
+  .get("/tuners", fetchTunersHandler)
+  .get("/cursor/:cursor?", fetchTunersHandler)
   .get("/tuners/form/:id?", ClerkRequireAuth, tunerFormHandler)
   .get("/remove-truncate-class/:id", removeTruncateClassHandler)
   .post("/tuners", ClerkRequireAuth, createTunerHandler)

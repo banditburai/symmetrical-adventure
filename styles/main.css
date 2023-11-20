@@ -332,7 +332,9 @@ form {
   fill: #CFDEF3;
 }
 
-
+.tuners {
+  margin-bottom: 50px; 
+}
 
 .tuners p {
   margin: 0px 0 0;
@@ -673,4 +675,11 @@ hr {
 }
 .tuners .like.selected  svg{
   fill: #ffc107;
+}
+
+.centered {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }

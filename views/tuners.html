@@ -1,88 +1,133 @@
 <ul class="tuners">
-  <span class="num-results"></span><strong>Number of results:</strong>
-  <%= it.tuners.length %></span>
-    <% it.tuners.forEach(tuner=> { %>
-      <div class="tuner-container">
-        <li class="tuner-entry">
+  <% if (it.isInitialLoad) { %> <!-- Only show this on initial load -->
+    <input type="hidden" id="total-tuner-count" style="display:none" value="<%= it.count %>" />
+    <span class="num-results"><strong>Number of results:</strong>
+      <%= it.count %>
+    </span>
+    <% } %>
+      <% it.tuners.forEach((tuner)=> { %>
+        <div class="tuner-container">
+          <li class="tuner-entry">
+            <div class="tuner-info">
+              <div class="sizebox">
+                <strong>
+                  <% if (tuner.size==='nonstandard' ) { %>
+                    non<br>standard
+                    <% } else { %>
+                      <%= tuner.size %>
+                        <% } %>
+                </strong>
+              </div>
+              <div class="new-container">
+                <div class="like-wrapper" id="like-wrapper-<%= tuner.id %>">
+                  <div class="comment-count" id="comment-count-<%= tuner.id %>">
+                    <em>
+                      <%= tuner.comments ? tuner.comments.length : 0 %>
+                    </em>
+                  </div>
+                  <button class="add-comment" hx-get="/comments/<%= tuner.id %>">
+                    <img src="/comment-smily.svg" alt="Icon to Add Comments">
+                  </button>
 
-          <div class="tuner-info">
-            <div class="sizebox">
-              <strong>
-                <% if (tuner.size==='nonstandard' ) { %>
-                  non<br>standard
-                  <% } else { %>
-                    <%= tuner.size %>
-                      <% } %>
-              </strong>
-            </div>
-            <div class="new-container">
-              <div class="like-wrapper" hx-ext="multi-swap" id="like-wrapper-<%= tuner.id %>">
-                <div class="comment-count" id="comment-count-<%= tuner.id %>">
-                  <em>
-                    <%= tuner.comments ? tuner.comments.length : 0 %>
-                  </em>
+                  <form class="like-form" id="like-form-<%= tuner.id %>" hx-target="this" hx-swap="outerHTML"
+                    hx-encoding="multipart/form-data" hx-post="/tuners/like/<%= tuner.id %>">
+                    <input type="hidden" name="liked" id="liked-state-<%= tuner.id %>" value="<%= tuner.liked %>" />
+                    <input type="hidden" name="id" value="<%= tuner.id %>" />
+                    <div class="like-count" id="like-count-<%= tuner.id %>"><em>
+                        <%= tuner.likes || 0 %>
+                      </em></div>
+                    <button class="like <%= tuner.liked ? 'selected' : '' %>" data-tuner-id="<%= tuner.id %>"
+                      hx-post="/tuners/like/<%= tuner.id %>" id="like-<%= tuner.id %>" data-liked="<%= tuner.liked %>"
+                      hx-trigger="click">
+                      <img src="/like.svg" alt="Icon to add a like">
+                    </button>
+                  </form>
                 </div>
-                <button class="add-comment" hx-get="/comments/<%= tuner.id %>">
-                  <img src="/comment-smily.svg" alt="Icon to Add Comments">
-                </button>
 
-                <form class="like-form" id="like-form-<%= tuner.id %>" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data"
-                  hx-post="/tuners/like/<%= tuner.id %>">
-                  <input type="hidden" name="liked" id="liked-state-<%= tuner.id %>" value="<%= tuner.liked %>" />
-                  <input type="hidden" name="id" value="<%= tuner.id %>" />
-                  <div class="like-count" id="like-count-<%= tuner.id %>"><em>
-                      <%= tuner.likes || 0 %>
-                    </em></div>
-                  <button class="like <%= tuner.liked ? 'selected' : '' %>" data-tuner-id="<%= tuner.id %>"
-                    hx-post="/tuners/like/<%= tuner.id %>" id="like-<%= tuner.id %>" data-liked="<%= tuner.liked %>"                    
-                    hx-trigger="click">
-                    <img src="/like.svg" alt="Icon to add a like">
-                  </button>
-                </form>
-              </div>
+                <div class="container">
+                  <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">
+                    <%= tuner.prompt %>
+                  </h2>
 
-              <div class="container">
-                <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">
-                  <%= tuner.prompt %>
-                </h2>
-
-              </div>
-              <% if(tuner.comments && tuner.comments.length> 0) { %>
-                <p class="recent-comment" hx-get="/comments/<%= tuner.id %>">
-                  <strong>Recent Comment by <%= tuner.comments[tuner.comments.length - 1].username %> :</strong>
-                  <%= tuner.comments[tuner.comments.length - 1].text %>
-                </p>
-                <% } %>
-            </div>
-
-            <div class="entry-nav">
-              <nav>
-                <button>
-                  <a href="<%= tuner.url %>" target="_blank" rel="noopener noreferrer" class="button view">
-                    <img src="/world.svg" alt="Icon to go to URL">
-                  </a>
-                </button>
-                <% if (tuner.canEdit) { %>
-                  <button class="edit" hx-get="/tuners/form/<%= tuner.id %>">
-                    <img src="/can-edit.svg" alt="Icon to edit">
-                  </button>
-                  <button class="remove" hx-delete="/tuners/<%= tuner.id %>" hx-confirm="Are you sure?">
-                    <img src="/trash.svg" alt="Icon to delete">
-                  </button>
+                </div>
+                <% if(tuner.comments && tuner.comments.length> 0) { %>
+                  <p class="recent-comment" hx-get="/comments/<%= tuner.id %>">
+                    <strong>Recent Comment by <%= tuner.comments[tuner.comments.length - 1].username %> :</strong>
+                    <%= tuner.comments[tuner.comments.length - 1].text %>
+                  </p>
                   <% } %>
-              </nav>
-            </div>
-          </div>
-      </div>
-      </li>
-      <% }) %>
+              </div>
 
+              <div class="entry-nav">
+                <nav>
+                  <button>
+                    <a href="<%= tuner.url %>" target="_blank" rel="noopener noreferrer" class="button view">
+                      <img src="/world.svg" alt="Icon to go to URL">
+                    </a>
+                  </button>
+                  <% if (tuner.canEdit) { %>
+                    <button class="edit" hx-get="/tuners/form/<%= tuner.id %>">
+                      <img src="/can-edit.svg" alt="Icon to edit">
+                    </button>
+                    <button class="remove" hx-delete="/tuners/<%= tuner.id %>" hx-confirm="Are you sure?">
+                      <img src="/trash.svg" alt="Icon to delete">
+                    </button>
+                    <% } %>
+                </nav>
+              </div>
+            </div>
+        </div>
+
+        </li>
+        <% }) %>
+          <% if (it.tuners.length> 0) { %>
+            <li id="infinite-scroll-trigger" hx-include="#cursor,#filter-options" hx-post="/search/<%= it.url %>"
+              hx-swap="beforeend" hx-target="this" hx-encoding="multipart/form-data" hx-trigger="intersect once"
+              hx-push-url="false">
+              <form id="scroller-form" hx-target="#tuners" style="display: none">
+                <input type="hidden" name="cursor" id="cursor" value="<%= it.cursor %>" />
+                <input type="hidden" name="filter-options" id="filter-options" value="<%= it.url %>" />
+              </form>
+              <img class="htmx-indicator" src="/three-dots.svg" alt="Loading..." style="display: none;" />
+            </li>
+            <% } %>
 </ul>
+
+
+
 
 <script>
   function togglePrompt(element) {
     element.classList.toggle('expanded-prompt');
     element.classList.toggle('text-overflow-clamp');
   }
+
+  if (typeof previousCursor === 'undefined') {
+    var previousCursor = "";
+  }
+
+  // document.body.addEventListener('htmx:afterSwap', function (event) {
+  //   if (event.detail.target.id === 'infinite-scroll-trigger') {
+  //     const cursorInput = document.getElementById('cursor');
+  //     const newCursor = cursorInput ? cursorInput.value : "";
+  //     if (newCursor !== previousCursor) {
+  //       previousCursor = newCursor;
+  //     }
+  //   }
+  // });
+
+
+  // document.addEventListener('searchUpdated', function (event) {
+  //   const newUrl = event.detail.newUrl;
+  //   const filterOptionsInput = htmx.find('#filter-options');
+  //   if (filterOptionsInput) {
+  //     filterOptionsInput.value = newUrl;
+  //   }
+  //   const infiniteScrollTrigger = htmx.find('#infinite-scroll-trigger');
+  //   if (infiniteScrollTrigger) {
+  //     infiniteScrollTrigger.setAttribute('hx-post', '${newURL}'); // set this to the route that handles the search
+  //   }
+  // });
+
 
 </script>
