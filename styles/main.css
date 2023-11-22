@@ -532,6 +532,9 @@ input[type="search"]:focus {
     align-items: right;
     padding: 0 50px;
   }
+.tuner-images{
+  display: none;
+}
 
   aside img {
     display: none;
@@ -542,12 +545,6 @@ input[type="search"]:focus {
   }
 }
 
-@media (max-width: 875px) {
-  .tuner-images{
-    display: none;
-  }
-  
-}
 
 .social-footer {
   display: flex;
