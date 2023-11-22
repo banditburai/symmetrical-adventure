@@ -1,5 +1,5 @@
 //service.ts
-
+// const DB_URL = Deno.env.get("DB_URL");
 const kv = await Deno.openKv();
 
 export type Tuner = {
@@ -230,7 +230,10 @@ export async function countTuners(options?: FilterOptions): Promise<number> {
 
 function matchesFilter(tuner: Tuner, options: FilterOptions): boolean {
   let matches = true;
-  if (options.key) matches &&= tuner.prompt.indexOf(options.key) > -1;
+  if (options.key) {
+    const lowerCaseKey = options.key.toLowerCase();
+    matches &&= tuner.prompt.toLowerCase().indexOf(lowerCaseKey) > -1;
+  }
   if (options.size) matches &&= tuner.size === options.size;
   if (options.raw) matches &&= /--style raw/.test(tuner.prompt);
   if (options.niji) matches &&= /--niji/.test(tuner.prompt);

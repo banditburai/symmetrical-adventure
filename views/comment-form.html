@@ -1,7 +1,7 @@
 <form hx-post="/comments" hx-target="this" hx-swap="outerHTML" hx-encoding="multipart/form-data">
     <input type="hidden" name="id" value="<%= it.id %>" />
     <div class="container">
-      <h2 class="text-overflow-clamp">
+      <h2 class="text-overflow-clamp" onclick="togglePrompt(this)">    
         <%= it.prompt %>
       </h2>       
       <a href="<%= it.url %>" target="_blank" rel="noopener noreferrer">View Original Tuner</a>
@@ -22,4 +22,12 @@
       </div>
     </footer>
   </form>
+
+
+  <script>
+    function togglePrompt(element) {
+    element.classList.toggle('expanded-prompt');
+    element.classList.toggle('text-overflow-clamp');
+  }
+  </script>
   

@@ -10,7 +10,7 @@
 
 </head>
 
-<body>
+<body>  
   <script async crossorigin="anonymous"
     data-clerk-publishable-key="pk_test_ZXhhY3QtaW5zZWN0LTAuY2xlcmsuYWNjb3VudHMuZGV2JA" onload="window.Clerk.load()"
     src="https://exact-insect-0.clerk.accounts.dev/npm/@clerk/clerk-js@4/dist/clerk.browser.js" type="text/javascript">
@@ -55,14 +55,14 @@
 
     </div>
     <div class="content">
-      <aside>
+      <!-- <aside>
         <img src="fish.png" />
-      </aside>
+      </aside> -->
 
       <main>
 
         <div hx-get="/tuners" hx-trigger="load" hx-target="#main-view"
-          hx-on:htmx:timeout="alert('Failed to fetch tuners')">        
+          hx-on:htmx:timeout="alert('Failed to fetch tuners')">
           <img id="loading-indicator" src="/three-dots.svg" class="htmx-indicator" style="display: none;" />
           <div id="main-view"></div>
         </div>
@@ -154,7 +154,7 @@
     const allPill = document.getElementById('show-all');
     const sizePills = document.querySelectorAll('.pill[hx-vals*="size"]');
     const filterPills = document.querySelectorAll('.pill[hx-vals*="true"]');
-        
+
     const likedByMePill = document.getElementById('liked-by-me');
     likedByMePill.addEventListener('click', function () {
       const userLikes = JSON.parse(localStorage.getItem('userLikes')) || [];
@@ -172,7 +172,7 @@
       }
     }
 
-     window.updateURL = function() {
+    window.updateURL = function () {
       // Start with an empty URLSearchParams object.
       const params = new URLSearchParams();
 
@@ -221,7 +221,7 @@
     }
 
     // Build search parameters from the current state for an HTMX request.
-    window.buildSearchParams = function() {
+    window.buildSearchParams = function () {
       // Construct an object to hold search parameters.
       const searchParams = {};
       if (searchInput.value) {
@@ -282,29 +282,29 @@
     }
 
     // New consolidated function to update state and view.
-    window.updateStateAndView = function() {
+    window.updateStateAndView = function () {
       updateURL();
       triggerHTMXUpdate();
     }
 
-// Function to build the base URL or URL with search parameters
-    window.constructHTMXGetUrl = function() {
+    // Function to build the base URL or URL with search parameters
+    window.constructHTMXGetUrl = function () {
       // Extract the base URL and start building the full URL.
       const baseUrl = "/search";
-      const searchParams = buildSearchParams();            
+      const searchParams = buildSearchParams();
       // If there are parameters to add to the URL, append them.
       const queryString = new URLSearchParams(searchParams).toString();
       return baseUrl + (queryString ? '?' + queryString : ''); // Append parameters if any exist.
     }
 
     // Function to trigger the HTMX request with the new URL
-    window.triggerHTMXUpdate = function() {
+    window.triggerHTMXUpdate = function () {
       const htmxTarget = htmx.find("#main-view");
       const newUrl = constructHTMXGetUrl();
 
       // document.dispatchEvent(new CustomEvent('searchUpdated', { detail: { newUrl } }));
-      
-      if (likedByMePill.classList.contains('selected')) { 
+
+      if (likedByMePill.classList.contains('selected')) {
         // Send a POST request with the form data
         htmx.ajax('POST', newUrl, { source: '#likes-storage-form', swap: '${htmxTarget}' })
 
@@ -368,11 +368,11 @@
       likeButton.classList.toggle('selected', isLiked);
       likeButton.setAttribute('data-liked', isLiked ? 'true' : 'false');
       const img = likeButton.querySelector('img'); // Get the img element inside the button
-        if (isLiked) {
-            img.src = '/like-selected.svg'; // Path to the selected icon
-        } else {
-            img.src = '/like.svg'; // Path to the default icon
-        }
+      if (isLiked) {
+        img.src = '/like-selected.svg'; // Path to the selected icon
+      } else {
+        img.src = '/like.svg'; // Path to the default icon
+      }
     } else {
       console.log('No like button found for ID:', tunerId);
     }
@@ -404,12 +404,12 @@
 
       button.classList.toggle('selected', isLiked);
       button.setAttribute('data-liked', isLiked ? 'true' : 'false');
-      const img = button.querySelector('img'); 
-        if (isLiked) {
-            img.src = '/like-selected.svg';
-        } else {
-            img.src = '/like.svg'; 
-        }
+      const img = button.querySelector('img');
+      if (isLiked) {
+        img.src = '/like-selected.svg';
+      } else {
+        img.src = '/like.svg';
+      }
       const hiddenInput = document.querySelector(`#liked-state-${tunerId}`);
       if (hiddenInput) {
         hiddenInput.value = isLiked.toString();

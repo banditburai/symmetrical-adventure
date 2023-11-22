@@ -5,9 +5,12 @@
       <%= it.count %>
     </span>
     <% } %>
-      <% it.tuners.forEach((tuner)=> { %>
+      <% it.tuners.forEach((tuner)=> { %>        
         <div class="tuner-container">
+         
+          
           <li class="tuner-entry">
+        
             <div class="tuner-info">
               <div class="sizebox">
                 <strong>
@@ -17,6 +20,25 @@
                       <%= tuner.size %>
                         <% } %>
                 </strong>
+              </div>
+              <div class="tuner-images">
+                <% let tunerId = tuner.url.split('/').pop(); %>
+                <% let leftImageUrl = `https://assets.promptsiren.com/${tunerId}_L.webp`; %>
+                <% let rightImageUrl = `https://assets.promptsiren.com/${tunerId}_R.webp`; %>
+                <div class="image-wrapper ">
+                  <a href="<%= leftImageUrl %>" target="_blank" rel="noopener noreferrer">
+                  <img src="<%= leftImageUrl %>" data-src="<%= leftImageUrl %>" class="lazyload" 
+                onerror="this.onerror=null; this.src='cat.svg'"
+                  alt="<%= tuner.url %>-Left"/>
+                  </a>
+                </div>
+                <div class="image-wrapper ">
+                  <a href="<%= rightImageUrl %>" target="_blank" rel="noopener noreferrer">
+                  <img src="<%= rightImageUrl %>" data-src="<%= rightImageUrl %>" class="lazyload" 
+                  onerror="this.onerror=null; this.src='dog.svg'"
+                  alt="<%= tuner.url %>-Right"/>
+                </a>
+                </div>
               </div>
               <div class="new-container">
                 <div class="like-wrapper" id="like-wrapper-<%= tuner.id %>">
@@ -97,14 +119,16 @@
 
 
 <script>
+
   function togglePrompt(element) {
     element.classList.toggle('expanded-prompt');
     element.classList.toggle('text-overflow-clamp');
   }
 
-  if (typeof previousCursor === 'undefined') {
-    var previousCursor = "";
-  }
+  // if (typeof previousCursor === 'undefined') {
+  //   var previousCursor = "";
+  // }
+
 
   // document.body.addEventListener('htmx:afterSwap', function (event) {
   //   if (event.detail.target.id === 'infinite-scroll-trigger') {
